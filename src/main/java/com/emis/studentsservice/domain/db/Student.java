@@ -2,6 +2,8 @@ package com.emis.studentsservice.domain.db;
 
 
 import com.emis.studentsservice.enums.Gender;
+import com.emis.studentsservice.enums.GradeLevel;
+import com.emis.studentsservice.enums.OrphanStatus;
 import com.emis.studentsservice.enums.StudentStatus;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -10,7 +12,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
 @Data
@@ -30,8 +31,9 @@ public class Student {
     private LocalDate dateOfBirth;
     private Gender gender;
     private LocalDateTime enrollmentDate;
-    private String classLevel;
+    private GradeLevel gradeLevel;
     private StudentStatus status;
+    private OrphanStatus orphanStatus;
     private String email;
     private String phone;
     private String address1;
@@ -39,7 +41,6 @@ public class Student {
     private String city;
     private String lga;
     private String state;
-    @Column("postal_code")
     private String postalCode;
     private String country;
     private String photoUrl;

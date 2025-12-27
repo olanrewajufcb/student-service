@@ -17,7 +17,7 @@ public record StudentResponse(
          String schoolName,
          String schoolCode,
          LocalDateTime enrollmentDate,
-         String classLevel,
+         String gradeLevel,
          StudentStatus status,
          String email,
          String phone,

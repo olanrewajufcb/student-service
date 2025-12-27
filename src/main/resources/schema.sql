@@ -5,24 +5,32 @@ DROP TABLE IF EXISTS medical_records;
 DROP TABLE IF EXISTS student_documents;
 DROP TABLE IF EXISTS enrolment_history;
 
--- CREATE TABLE schools (
---     school_id       BIGSERIAL PRIMARY KEY ,
---     school_code     VARCHAR(20) UNIQUE NOT NULL ,
---     school_name     VARCHAR(100)   NOT NULL ,
---     type            VARCHAR(50) NOT NULL ,
---     address         VARCHAR,
---     email           VARCHAR,
---     principal_name  VARCHAR,
---     max_students_per_class    INT,
---     school_capacity INT,
---     academic_calendar VARCHAR,
---     establishment_date TIMESTAMP,
---     status          VARCHAR(50),
---     city            VARCHAR,
---     lga             VARCHAR,
---     state           VARCHAR,
---     created_at      TIMESTAMP
--- )
+
+-- 0. Create ENUM types
+CREATE TYPE orphan_status AS ENUM (
+    'NONE', 'LOST_MOTHER', 'LOST_FATHER', 'LOST_BOTH'
+);
+
+CREATE TYPE disability_level AS ENUM (
+    'NONE', 'MINOR', 'MODERATE', 'SEVERE'
+);
+
+CREATE TYPE disability_type AS ENUM (
+    'NONE', 'VISUALLy_IMPAIRED', 'BLIND','HEARING_IMPAIRED', 'SPEECH_IMPAIRED', 'MENTALLY_CHALLENGED',
+    'PHYSICALLY_CHALLENGED', 'AUTISM', 'OTHER'
+);
+
+CREATE TYPE status AS ENUM (
+    'ACTIVE', 'INACTIVE', 'GRADUATED', 'DROPPED'
+);
+
+CREATE TYPE grade_level_type AS ENUM (
+    'PRE_NURSERY', 'NURSERY_1', 'NURSERY_2',
+    'PRIMARY_1', 'PRIMARY_2', 'PRIMARY_3',
+    'PRIMARY_4', 'PRIMARY_5', 'PRIMARY_6',
+    'JSS_1', 'JSS_2', 'JSS_3',
+    'SSS_1', 'SSS_2', 'SSS_3'
+);
 
 CREATE TABLE students
 (
@@ -33,12 +41,12 @@ CREATE TABLE students
     school_name     VARCHAR(50) NOT NULL default '', --denormalized to school service
     first_name      VARCHAR(100)       NOT NULL,
     last_name       VARCHAR(100)       NOT NULL,
-    school_id       BIGINT NOT NULL,
     date_of_birth   DATE,
     gender          VARCHAR(20),
     enrollment_date TIMESTAMP,
-    class_level     VARCHAR(20),
-    status          VARCHAR(50) DEFAULT ACTIVE,
+    grade_level     VARCHAR(20),
+    status          status DEFAULT ACTIVE,
+    orphan_status orphan_status DEFAULT 'NONE',
     -- Embedded ContactInfo as columns:
     email           VARCHAR(255),
     phone           VARCHAR(50),
@@ -79,6 +87,10 @@ CREATE TABLE medical_records (
     allergies TEXT[],
     chronic_conditions TEXT[],
     notes TEXT,
+    special_needs TEXT,
+    disability_type disability_type DEFAULT 'NONE',
+    disability_level disability_level DEFAULT 'NONE',
+    special_education_needs BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW(),
 
@@ -117,3 +129,14 @@ CREATE TABLE enrolment_history (
                                    CONSTRAINT fk_enrolment_student FOREIGN KEY (student_id)
                                        REFERENCES students(student_id) ON DELETE CASCADE
 );
+
+CREATE INDEX idx_students_student_number ON students(student_number);
+CREATE INDEX idx_students_studentId ON students(student_id);
+CREATE INDEX idx_students_school_id ON students(school_id);
+CREATE INDEX idx_guardians_student_id ON guardians(student_id);
+CREATE INDEX idx_medical_records_student_id ON medical_records(student_id);
+CREATE INDEX idx_enrolment_history_student_id ON enrolment_history(student_id);
+CREATE INDEX idx_special_needs_student ON special_needs(student_id);
+CREATE INDEX idx_orphan_details_student ON orphan_details(student_id);
+CREATE INDEX idx_students_orphan_status ON students(orphan_status);
+CREATE INDEX idx_students_special_needs ON students(has_special_needs);

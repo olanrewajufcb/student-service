@@ -26,7 +26,7 @@ public class EnrollmentHistoryServiceImpl implements EnrollmentHistoryService {
     public Mono<EnrollmentResponse> createInitialEnrollment(Student student, String schoolName) {
         var enrollmentRequest = new EnrollmentHistoryRequest(
             getCurrentSchoolYear(),
-                student.getClassLevel(),
+                student.getGradeLevel().name(),
                 schoolName,
                 student.getSchoolId(),
                 EnrollmentType.INITIAL_ENROLLMENT,

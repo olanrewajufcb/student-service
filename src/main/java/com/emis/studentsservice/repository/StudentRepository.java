@@ -8,6 +8,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.Map;
 
 public interface StudentRepository extends R2dbcRepository<Student, Long> {
 
@@ -43,8 +44,6 @@ public interface StudentRepository extends R2dbcRepository<Student, Long> {
     @Query("SELECT * FROM students WHERE status = :status ORDER BY first_name, last_name")
     Flux<Student> findByStatus(String status, Pageable pageable);
 
-    @Query("SELECT COUNT(*) FROM students WHERE school_id = :schoolId")
-    Mono<Long> countBySchoolId(Long schoolId);
 
     @Query("SELECT * FROM students WHERE first_name ILIKE :query OR last_name ILIKE :query OR student_number ILIKE :query")
     Flux<Student> searchByNameOrNumber(String query);
@@ -115,5 +114,50 @@ public interface StudentRepository extends R2dbcRepository<Student, Long> {
     Flux<Student> findAllById(List<Long> ids);
 
 //    Flux<Student> findByStudentIdIn(Iterable<Long> ids);
+@Query("SELECT COUNT(*) FROM students WHERE school_id = $1 AND grade_level = $2")
+Mono<Long> countBySchoolIdAndGradeLevel(Long schoolId, String gradeLevel);
 
+
+    @Query("SELECT school_id FROM students WHERE school_code = $1 LIMIT 1")
+    Mono<Long> findSchoolIdBySchoolCode(String schoolCode);
+
+
+    // Total students (could be derived from sum, but keep for simplicity/clarity)
+    @Query("SELECT COUNT(*) FROM students WHERE school_id = $1")
+    Mono<Long> countBySchoolId(Long schoolId);
+
+
+    @Query("SELECT status AS key, COUNT(*) AS count FROM students WHERE school_id = $1 GROUP BY status")
+    Flux<Map<String, Object>> countByStatusGrouped(Long schoolId);
+
+    @Query("SELECT grade_level AS key, COUNT(*) AS count FROM students WHERE school_id = $1 GROUP BY grade_level")
+    Flux<Map<String, Object>> countByGradeLevelGrouped(Long schoolId);
+
+    @Query("SELECT gender AS key, COUNT(*) AS count FROM students WHERE school_id = $1 GROUP BY gender")
+    Flux<Map<String, Object>> countByGenderGrouped(Long schoolId);
+
+    @Query("SELECT COUNT(*) FROM students WHERE school_id = $1 AND status = 'ACTIVE'")
+    Mono<Long> countBySchoolIdAndStatus(Long schoolId, String status);
+
+    @Query("SELECT * FROM students WHERE student_number = $1")
+    Mono<Student> findByStudentNumber(String studentNumber);
+
+
+    @Query("SELECT COUNT(*) FROM students")
+    Mono<Long> countAllStudents();
+
+    @Query("SELECT COUNT(*) FROM students WHERE status = $1")
+    Mono<Long> countAllStudentsByStatus(String status);
+
+    @Query("SELECT status AS key, COUNT(*) AS count FROM students GROUP BY status")
+    Flux<Map<String, Object>> countByStatusGrouped();
+
+    @Query("SELECT grade_level AS key, COUNT(*) AS count FROM students GROUP BY grade_level")
+    Flux<Map<String, Object>> countByGradeLevelGrouped();
+
+    @Query("SELECT gender AS key, COUNT(*) AS count FROM students GROUP BY gender")
+    Flux<Map<String, Object>> countByGenderGrouped();
+
+    @Query("SELECT * FROM students ORDER BY student_number DESC LIMIT $1 OFFSET $2")
+    Flux<Student> findAllStudents(int size, long offset);
 }

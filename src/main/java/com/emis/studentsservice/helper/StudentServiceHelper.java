@@ -29,8 +29,8 @@ public class StudentServiceHelper {
         if (request.dateOfBirth() != null) {
             student.setDateOfBirth(request.dateOfBirth());
         }
-        if (request.classLevel() != null) {
-            student.setClassLevel(request.classLevel());
+        if (request.gradeLevel() != null) {
+            student.setGradeLevel(request.gradeLevel());
         }
         if (request.address1() != null) {
             student.setAddress1(request.address1());

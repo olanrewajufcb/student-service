@@ -3,7 +3,9 @@ package com.emis.studentsservice.controller;
 import com.emis.studentsservice.domain.db.Student;
 import com.emis.studentsservice.dto.request.CreateStudentRequest;
 import com.emis.studentsservice.dto.request.UpdateStudentRequest;
+import com.emis.studentsservice.dto.response.ApiResponse;
 import com.emis.studentsservice.dto.response.StudentResponse;
+import com.emis.studentsservice.dto.response.StudentStatisticsResponse;
 import com.emis.studentsservice.exception.BadRequestException;
 import com.emis.studentsservice.service.StudentService;
 import jakarta.validation.Valid;
@@ -18,7 +20,9 @@ import java.util.stream.Collectors;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
@@ -103,6 +107,41 @@ public class StudentServiceController {
         return studentService.getStudentsBatch(studentId, requestId)
                 .doOnSubscribe(sub -> log.info("Getting students for school with id {}", requestId))
                 .contextWrite(ctx -> ctx.put(REQUEST_ID, requestId));
+    }
+
+    @GetMapping("/statistics?schoolCode")
+    public Mono<StudentStatisticsResponse> getStudentStatistics(@PathVariable String schoolCode) {
+        String requestId = UUID.randomUUID().toString();
+
+        return studentService.getStudentStatistics(schoolCode, requestId)
+                .doOnSubscribe(sub -> log.info("Fetching students statistics for school with id {}", requestId))
+                .contextWrite(ctx -> ctx.put(REQUEST_ID, requestId));
+    }
+
+    @GetMapping("schools/statistics")
+    public Mono<ApiResponse<StudentStatisticsResponse>> getAllSchoolsStudentStatistics() {
+        String requestId = UUID.randomUUID().toString();
+
+        return studentService.getAllSchoolsStudentStatistics(requestId)
+                .doOnSubscribe(sub -> log.info("Fetching student statistics for ALL schools [requestId={}]", requestId))
+                .contextWrite(ctx -> ctx.put(REQUEST_ID, requestId));
+    }
+
+    @GetMapping
+    public Mono<Page<StudentResponse>> getAllStudents(@RequestParam(defaultValue = "0")
+                                                          @Min(value = 0, message = "page must not be less than 0")
+                                                          int page,
+                                                      @RequestParam(defaultValue = "10")
+                                                          @Min(value = 1, message = "size must be at least 1")
+                                                          int size,
+                                                      @RequestParam(defaultValue = "studentNumber")
+                                                      String sortBy){
+        String requestId = UUID.randomUUID().toString();
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy));
+        return studentService.getAllStudents(pageable, requestId)
+                .doOnSubscribe(sub -> log.info("Getting all students [requestId={}]", requestId))
+                .contextWrite(ctx -> ctx.put(REQUEST_ID, requestId));
+
     }
 }
 

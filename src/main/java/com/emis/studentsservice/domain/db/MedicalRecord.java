@@ -2,6 +2,9 @@ package com.emis.studentsservice.domain.db;
 
 import java.time.LocalDateTime;
 import java.util.List;
+
+import com.emis.studentsservice.enums.DisabilityLevel;
+import com.emis.studentsservice.enums.DisabilityType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -20,6 +23,8 @@ public class MedicalRecord {
     private List<String> allergies;
     private List<String> chronicConditions;
     private String notes;
+    private DisabilityType disabilityType;
+    private DisabilityLevel disabilityLevel;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

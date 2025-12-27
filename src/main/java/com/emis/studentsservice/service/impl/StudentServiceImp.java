@@ -2,8 +2,10 @@ package com.emis.studentsservice.service.impl;
 
 import com.emis.studentsservice.domain.db.Student;
 import com.emis.studentsservice.dto.request.*;
+import com.emis.studentsservice.dto.response.ApiResponse;
 import com.emis.studentsservice.dto.response.SchoolDetailsResponse;
 import com.emis.studentsservice.dto.response.StudentResponse;
+import com.emis.studentsservice.dto.response.StudentStatisticsResponse;
 import com.emis.studentsservice.enums.SchoolStatus;
 import com.emis.studentsservice.exception.*;
 import com.emis.studentsservice.helper.StudentServiceHelper;
@@ -11,10 +13,20 @@ import com.emis.studentsservice.mapper.StudentMapper;
 import com.emis.studentsservice.repository.StudentRepository;
 import com.emis.studentsservice.service.*;
 import com.emis.studentsservice.service.client.SchoolService;
+
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.TimeoutException;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.reactive.TransactionalOperator;
@@ -152,6 +164,117 @@ public class StudentServiceImp implements StudentService {
     public Flux<StudentResponse> getStudentsBatch(List<Long> studentIds, String requestId) {
         return studentRepository.findAllById(studentIds)
                 .map(studentMapper::toResponse);
+    }
+
+    @Override
+    public Mono<StudentStatisticsResponse> getStudentStatistics(String schoolCode, String requestId) {
+    return studentRepository
+        .findSchoolIdBySchoolCode(schoolCode)
+        .switchIfEmpty(Mono.error(new StudentNotFoundException("School not found: " + schoolCode)))
+        .flatMap(
+            schoolId ->
+                Mono.zip(
+                        studentRepository.countBySchoolId(schoolId),
+                        studentRepository.countBySchoolIdAndStatus(schoolId, "ACTIVE"),
+                        toCountMap(studentRepository.countByStatusGrouped(schoolId)),
+                        toCountMap(studentRepository.countByGradeLevelGrouped(schoolId)),
+                        toCountMap(studentRepository.countByGenderGrouped(schoolId)))
+                    .map(
+                        tuple -> {
+                          long totalStudents = tuple.getT1();
+                          long activeStudents = tuple.getT2();
+                          Map<String, Long> byStatus = tuple.getT3();
+                          Map<String, Long> byGradeLevel = tuple.getT4();
+                          Map<String, Long> byGender = tuple.getT5();
+
+                          // Ensure activeStudents matches byStatus.get("ACTIVE") — but keep T2 for
+                          // consistency
+                          return new StudentStatisticsResponse(
+                              totalStudents, activeStudents, byStatus, byGradeLevel, byGender);
+                        }))
+            .doOnSuccess(resp -> log.info("[{}] Fetched stats: total={}, active={}",
+                    requestId, resp.totalStudents(), resp.activeStudents()));
+    }
+
+    @Override
+    public Mono<ApiResponse<StudentStatisticsResponse>> getAllSchoolsStudentStatistics(String requestId) {
+        return Mono.zip(
+                        studentRepository.countAllStudents(),
+                        studentRepository.countAllStudentsByStatus("ACTIVE"),
+                        toCountMap(studentRepository.countByStatusGrouped()),
+                        toCountMap(studentRepository.countByGradeLevelGrouped()),
+                        toCountMap(studentRepository.countByGenderGrouped()))
+                .map(
+                        tuple -> {
+                            long totalStudents = tuple.getT1();
+                            long activeStudents = tuple.getT2();
+                            Map<String, Long> byStatus = tuple.getT3();
+                            Map<String, Long> byGradeLevel = tuple.getT4();
+                            Map<String, Long> byGender = tuple.getT5();
+                           var response = new StudentStatisticsResponse(
+                                    totalStudents, activeStudents, byStatus, byGradeLevel, byGender);
+                            return new ApiResponse<>(requestId, LocalDateTime.now(), response);
+                        })
+                .doOnSuccess(resp -> log.info("[{}] Fetched stats: total={}, active={}",
+                        requestId, resp.data().totalStudents(), resp.data().activeStudents()));
+    }
+
+    @Override
+    public Mono<Page<StudentResponse>> getAllStudents(Pageable pageable, String requestId) {
+        int size = pageable.getPageSize();
+        long offset = pageable.getOffset();
+    return Mono.zip(
+            studentRepository.findAllStudents(size, offset).collectList(),
+            studentRepository.countAllStudents())
+        .timeout(Duration.ofSeconds(3))
+        .flatMap(
+            tuple -> {
+              List<Student> students = tuple.getT1();
+              long totalCount = tuple.getT2();
+              if (totalCount == 0) {
+                Page<StudentResponse> emptyPage = Page.empty();
+                return Mono.just(emptyPage);
+              }
+              var response = students.stream().map(studentMapper::toResponse).toList();
+              Page<StudentResponse> page = new PageImpl<>(response, pageable, totalCount);
+              return Mono.just(page);
+            })
+        .doOnSuccess(resp -> log.info("Successfully fetched students from the DB"))
+        .onErrorMap(
+            TimeoutException.class,
+            ex -> new StudentServiceTimeoutException("Database timeout", ex))
+        .onErrorMap(
+            error -> {
+              log.error("[{}] Failed to fetch students from the DB : ", requestId, error);
+              return new StudentServiceFailureException("Failed to fetch students ", error);
+            });
+    }
+
+    private Mono<Map<String, Long>> toCountMap(Flux<Map<String, Object>> flux) {
+        return flux
+                .mapNotNull(map -> {
+                    Object keyObj = map.get("key");
+                    Object countObj = map.get("count");
+
+                    if (keyObj == null) {
+                        log.warn("Skipping null key in grouped count: {}", map);
+                        return null;
+                    }
+                    if (!(countObj instanceof Number)) {
+                        log.error("Invalid count value: {} (expected Number)", countObj);
+                        throw new IllegalStateException("Non-numeric count in aggregation");
+                    }
+
+                    String key = String.valueOf(keyObj).trim().toUpperCase(); // normalize if needed
+                    Long count = ((Number) countObj).longValue();
+                    return Map.entry(key, count);
+                })
+                .filter(Objects::nonNull)
+                .collectMap(
+                        stringLongEntry -> stringLongEntry != null ? stringLongEntry.getKey() : null,
+                        stringLongEntry1 -> stringLongEntry1 != null ? stringLongEntry1.getValue() : null,
+                        HashMap::new
+                );
     }
 
     private Mono<SchoolDetailsResponse> getSchoolDetails(String schoolCode) {

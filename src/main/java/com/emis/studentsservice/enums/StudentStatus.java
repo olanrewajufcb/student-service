@@ -9,5 +9,8 @@ public enum StudentStatus {
     SUSPENDED,
     ENROLLED,
     DROPPED_OUT,
-    ADMITTED
+    ADMITTED,
+    TRANSFERRED_IN,
+    TRANSFERRED_OUT,
+    PROMOTED
 }

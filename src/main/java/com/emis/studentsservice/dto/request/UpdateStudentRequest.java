@@ -1,5 +1,6 @@
 package com.emis.studentsservice.dto.request;
 
+import com.emis.studentsservice.enums.GradeLevel;
 import com.emis.studentsservice.enums.StudentStatus;
 
 import java.time.LocalDate;
@@ -12,7 +13,7 @@ public record UpdateStudentRequest(
                                    LocalDate dateOfBirth,
                                    String gender,
                                    LocalDateTime enrollmentDate,
-                                   String classLevel,
+                                   GradeLevel gradeLevel,
                                    StudentStatus status,
                                    String email,
                                    String phone,

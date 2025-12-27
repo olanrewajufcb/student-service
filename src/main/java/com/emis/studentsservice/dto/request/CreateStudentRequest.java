@@ -2,6 +2,8 @@ package com.emis.studentsservice.dto.request;
 
 import com.emis.studentsservice.dto.ContactInfoRequest;
 import com.emis.studentsservice.enums.Gender;
+import com.emis.studentsservice.enums.GradeLevel;
+import com.emis.studentsservice.enums.OrphanStatus;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import java.time.LocalDate;
@@ -34,12 +36,21 @@ public record CreateStudentRequest(
         LocalDate dateOfBirth,
         @NotNull(message = "Gender is required")
         Gender gender,
+        String email,
+        String address1,
+        String address2,
+        String city,
+        String ward,
+        String lga,
+        String postalCode,
+        String state,
         @NotNull(message = "enrollment date is required")
         @PastOrPresent(message = "Enrollment date cannot be in the future")
         LocalDateTime enrollmentDate,
         @NotBlank(message = "Grade level is required")
-        @Pattern(regexp = "^(K|[1-9]|1[0-2])$", message = "Class level must be K or 1-12")
-        String classLevel,
+        @Pattern(regexp = "^(K|[1-9]|1[0-2])$", message = "Grade level must be K or 1-12")
+        GradeLevel gradeLevel,
+        OrphanStatus orphanStatus,
         @Valid
         ContactInfoRequest contactInfo,
         @NotNull(message = "At least one guardian is required")
