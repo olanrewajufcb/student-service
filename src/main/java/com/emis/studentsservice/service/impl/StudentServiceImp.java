@@ -227,17 +227,17 @@ public class StudentServiceImp implements StudentService {
             studentRepository.findAllStudents(size, offset).collectList(),
             studentRepository.countAllStudents())
         .timeout(Duration.ofSeconds(3))
-        .flatMap(
+        .map(
             tuple -> {
               List<Student> students = tuple.getT1();
               long totalCount = tuple.getT2();
-              if (totalCount == 0) {
-                Page<StudentResponse> emptyPage = Page.empty();
-                return Mono.just(emptyPage);
-              }
-              var response = students.stream().map(studentMapper::toResponse).toList();
-              Page<StudentResponse> page = new PageImpl<>(response, pageable, totalCount);
-              return Mono.just(page);
+                List<StudentResponse> response = totalCount == 0
+                        ? List.of()
+                        : students.stream()
+                            .map(studentMapper::toResponse)
+                            .toList();
+
+              return (Page<StudentResponse>) new PageImpl<>(response, pageable, totalCount);
             })
         .doOnSuccess(resp -> log.info("Successfully fetched students from the DB"))
         .onErrorMap(

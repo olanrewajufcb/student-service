@@ -3,13 +3,28 @@ spring:
     name: student-service
 
   r2dbc:
-    username: user
-    password: password
-    url: r2dbc:postgresql://${DB_HOST:localhost}:5432/emis_student_db
+    username: student_user
+    password: ${SCHOOL_DB_PASSWORD:student_pwd}
+    properties:
+      schema: student_schema
+    url: r2dbc:postgresql://${DB_HOST:localhost}:5432/emis_db?schema=student_schema
     pool:
       max-create-connection-time: 2s
       initial-size: 5
       max-size: 10
+
+
+  flyway:
+    user: student_user
+    password: ${FLYWAY_DB_PASSWORD:student_pwd}
+    url: jdbc:postgresql://${DB_HOST:localhost}:5432/emis_db
+    schemas: student_schema
+    default-schema: student_schema
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    validate-on-migrate: true
+    out-of-order: false
 
   #  security:
   #    oauth2:
