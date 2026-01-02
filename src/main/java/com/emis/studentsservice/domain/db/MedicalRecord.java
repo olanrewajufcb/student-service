@@ -1,5 +1,6 @@
 package com.emis.studentsservice.domain.db;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -25,6 +26,8 @@ public class MedicalRecord {
     private String notes;
     private DisabilityType disabilityType;
     private DisabilityLevel disabilityLevel;
+    private Boolean isDeleted;
+    private LocalDate deletedAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

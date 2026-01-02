@@ -4,6 +4,7 @@ import com.emis.studentsservice.domain.db.Student;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.r2dbc.repository.R2dbcRepository;
+import org.yaml.snakeyaml.util.Tuple;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -127,37 +128,62 @@ Mono<Long> countBySchoolIdAndGradeLevel(Long schoolId, String gradeLevel);
     Mono<Long> countBySchoolId(Long schoolId);
 
 
-    @Query("SELECT status AS key, COUNT(*) AS count FROM students WHERE school_id = $1 GROUP BY status")
-    Flux<Map<String, Object>> countByStatusGrouped(Long schoolId);
+    @Query(""" 
+        SELECT status AS key, COUNT(*) AS count FROM students WHERE school_id = $1  
+        AND is_deleted = FALSE  GROUP BY status
+        """)
+    Flux<KeyCountProjection> countByStatusGrouped(Long schoolId);
 
-    @Query("SELECT grade_level AS key, COUNT(*) AS count FROM students WHERE school_id = $1 GROUP BY grade_level")
-    Flux<Map<String, Object>> countByGradeLevelGrouped(Long schoolId);
+    @Query("""
+        SELECT grade_level AS key, COUNT(*) AS count FROM students WHERE school_id = $1
+         AND is_deleted = FALSE GROUP BY grade_level
+        """)
+    Flux<KeyCountProjection> countByGradeLevelGrouped(Long schoolId);
 
-    @Query("SELECT gender AS key, COUNT(*) AS count FROM students WHERE school_id = $1 GROUP BY gender")
-    Flux<Map<String, Object>> countByGenderGrouped(Long schoolId);
+    @Query("""
+    SELECT gender AS key, COUNT(*) AS count FROM students WHERE school_id = $1 
+        AND is_deleted = FALSE  GROUP BY gender
+            """)
+    Flux<KeyCountProjection> countByGenderGrouped(Long schoolId);
 
-    @Query("SELECT COUNT(*) FROM students WHERE school_id = $1 AND status = 'ACTIVE'")
-    Mono<Long> countBySchoolIdAndStatus(Long schoolId, String status);
+    @Query("""
+        SELECT COUNT(*) FROM students WHERE school_id = $1 AND status = 'ACTIVE'
+        AND is_deleted = FALSE
+        """)
+    Mono<Long> countBySchoolIdAndStatus(Long schoolId);
 
     @Query("SELECT * FROM students WHERE student_number = $1")
     Mono<Student> findByStudentNumber(String studentNumber);
 
 
-    @Query("SELECT COUNT(*) FROM students")
+    @Query("SELECT COUNT(*) FROM students WHERE is_deleted = FALSE")
     Mono<Long> countAllStudents();
 
-    @Query("SELECT COUNT(*) FROM students WHERE status = $1")
+    @Query("SELECT COUNT(*) FROM students WHERE status = $1 AND is_deleted = FALSE")
     Mono<Long> countAllStudentsByStatus(String status);
 
-    @Query("SELECT status AS key, COUNT(*) AS count FROM students GROUP BY status")
-    Flux<Map<String, Object>> countByStatusGrouped();
+    @Query("SELECT status AS key, COUNT(*) AS count FROM students WHERE is_deleted = FALSE GROUP BY status")
+    Flux<KeyCountProjection> countByStatusGrouped();
 
-    @Query("SELECT grade_level AS key, COUNT(*) AS count FROM students GROUP BY grade_level")
-    Flux<Map<String, Object>> countByGradeLevelGrouped();
+    @Query("""
+        SELECT grade_level AS key, COUNT(*) AS count FROM students 
+       WHERE is_deleted = FALSE GROUP BY grade_level
+       """)
+    Flux<KeyCountProjection> countByGradeLevelGrouped();
 
-    @Query("SELECT gender AS key, COUNT(*) AS count FROM students GROUP BY gender")
-    Flux<Map<String, Object>> countByGenderGrouped();
+    @Query("""
+        SELECT gender AS key, COUNT(*) AS count FROM students 
+        WHERE is_deleted = FALSE GROUP BY gender
+ """)
+    Flux<KeyCountProjection> countByGenderGrouped();
 
-    @Query("SELECT * FROM students ORDER BY student_number DESC LIMIT $1 OFFSET $2")
+    @Query("SELECT * FROM students WHERE is_deleted = FALSE ORDER BY student_number DESC LIMIT $1 OFFSET $2")
     Flux<Student> findAllStudents(int size, long offset);
+
+    @Query("""
+    SELECT * FROM students 
+    WHERE school_code = :schoolCode
+    ORDER BY student_id LIMIT :size OFFSET :offset
+    """)
+    Flux<Student> findBySchoolCode(String schoolCode, int size, long offset);
 }

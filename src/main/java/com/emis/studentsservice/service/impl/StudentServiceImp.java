@@ -7,9 +7,11 @@ import com.emis.studentsservice.dto.response.SchoolDetailsResponse;
 import com.emis.studentsservice.dto.response.StudentResponse;
 import com.emis.studentsservice.dto.response.StudentStatisticsResponse;
 import com.emis.studentsservice.enums.SchoolStatus;
+import com.emis.studentsservice.enums.StudentStatus;
 import com.emis.studentsservice.exception.*;
 import com.emis.studentsservice.helper.StudentServiceHelper;
 import com.emis.studentsservice.mapper.StudentMapper;
+import com.emis.studentsservice.repository.KeyCountProjection;
 import com.emis.studentsservice.repository.StudentRepository;
 import com.emis.studentsservice.service.*;
 import com.emis.studentsservice.service.client.SchoolService;
@@ -19,7 +21,6 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.TimeoutException;
 
 import lombok.RequiredArgsConstructor;
@@ -60,18 +61,19 @@ public class StudentServiceImp implements StudentService {
                         .thenReturn(schoolDetails)
                 )
                         .flatMap(schoolDetails ->
-                               Mono.defer(() -> studentRepository.save(student)
-                                .flatMap(savedStudent -> {
-                                    log.info("Student saved with ID: {}", savedStudent.getStudentId());
-                                    return saveAssociatedData(savedStudent, request, schoolDetails.name())
-                                            .thenReturn(savedStudent);
-                                }))
-                                .as(transactionalOperator::transactional)
-     )
-
+                                Mono.defer(() -> {
+                                    student.setSchoolName(schoolDetails.schoolName());
+                                    return studentRepository.save(student)
+                                            .flatMap(savedStudent -> {
+                                                log.info("Student saved with ID: {}", savedStudent.getStudentId());
+                                                return saveAssociatedData(savedStudent, request, schoolDetails.schoolName())
+                                                    .thenReturn(savedStudent);
+                                            });
+                                        })
+                                .as(transactionalOperator::transactional))
                 .map(studentMapper::toResponse)
                 .doOnSuccess(response -> log.info("Successfully created student: {}", response.studentId()))
-                .doOnError(error -> log.error("Failed to create student: {}", error.getMessage()))
+                .doOnError(error -> log.error("Failed to create student:::::::::::", error))
                 .onErrorMap(err -> {
                     if (err instanceof DataIntegrityViolationException) {
                         String msg = err.getMessage();
@@ -90,48 +92,55 @@ public class StudentServiceImp implements StudentService {
     @Override
     public Mono<StudentResponse> updateStudent(String studentNumber, UpdateStudentRequest request,
                                        String requestId) {
-        return studentRepository.findByStudentNumber(studentNumber)
-                .switchIfEmpty(Mono.error(new StudentNotFoundException(
-                        "Student with number '" + studentNumber + "' not found. " + requestId)))
-                .flatMap(existingStudent -> {
-                    log.info("Found existing student with number: {}", studentNumber);
-                    Student updatedStudent = studentServiceHelper.updateStudent(existingStudent, request);
-                    return studentRepository.save(updatedStudent);
-                })
-                .doOnSuccess(response -> log.info("Successfully updated student: {}", response.getStudentId()))
-                .map(studentMapper::toResponse)
-                .doOnError(error -> log.error("Failed to update student: {}", error.getMessage()))
-                .onErrorMap(err -> {
-                    if (err instanceof DataIntegrityViolationException) {
-                        String msg = err.getMessage();
-                            return new AlreadyExistException("Data integrity violation: " + msg + requestId);
-                        }
-                    return new StudentUpdateFailedException( "RequestId: "  + requestId + err.getMessage() +  studentNumber);
-                });
+    return studentRepository
+        .findByStudentNumber(studentNumber)
+        .switchIfEmpty(
+            Mono.error(
+                new StudentNotFoundException(
+                    "Student with number '" + studentNumber + "' not found. " + requestId)))
+        .flatMap(
+            existingStudent -> {
+              log.info("Found existing student with number: {}", studentNumber);
+              if (existingStudent.getStatus() == StudentStatus.INACTIVE) {
+                  return Mono.error(
+                      new StudentInactiveException(
+                          "Student with number '"
+                              + studentNumber
+                              + "' is inactive. "
+                              + requestId));
+              }
+                Student updatedStudent =
+                    studentServiceHelper.updateStudent(existingStudent, request);
+                return studentRepository.save(updatedStudent);
+
+            })
+        .doOnSuccess(
+            response -> log.info("Successfully updated student: {}", response.getStudentId()))
+        .map(studentMapper::toResponse)
+        .doOnError(error -> log.error("Failed to update student: {}", error.getMessage()))
+        .onErrorMap(
+            err -> {
+              if (err instanceof DataIntegrityViolationException) {
+                String msg = err.getMessage();
+                return new AlreadyExistException("Data integrity violation: " + msg + requestId);
+              }
+              return new StudentUpdateFailedException(
+                  "RequestId: " + requestId + err.getMessage() + studentNumber);
+            });
     }
 
     @Override
     public Flux<StudentResponse> getStudentsBySchoolCode(String schoolCode,
                                          Pageable pageable, String requestId) {
-    return schoolService
-        .getSchoolDetails(schoolCode)
-        .flatMapMany(
-            response -> {
-              if (response.schoolId() == null) {
-                return Mono.error(
-                    new SchoolNotFoundException(
-                        "School with code '" + schoolCode + "' not found. " + requestId));
-              }
-              return studentRepository
-                  .findBySchoolId(response.schoolId(), pageable.getPageSize(), pageable.getOffset())
+
+              return studentRepository.findBySchoolCode(schoolCode,pageable.getPageSize(), pageable.getOffset())
                   .switchIfEmpty(
                       Mono.error(
                           new StudentNotFoundException(
                               "No students found for the the given school"
                                   + schoolCode
                                   + ". "
-                                  + requestId)));
-            })
+                                  + requestId)))
         .map(studentMapper::toResponse)
         .doOnSubscribe(
             sub -> log.info(" [{}] Fetching students for school code: {}", requestId, schoolCode))
@@ -175,25 +184,21 @@ public class StudentServiceImp implements StudentService {
             schoolId ->
                 Mono.zip(
                         studentRepository.countBySchoolId(schoolId),
-                        studentRepository.countBySchoolIdAndStatus(schoolId, "ACTIVE"),
+                        studentRepository.countBySchoolIdAndStatus(schoolId),
                         toCountMap(studentRepository.countByStatusGrouped(schoolId)),
                         toCountMap(studentRepository.countByGradeLevelGrouped(schoolId)),
-                        toCountMap(studentRepository.countByGenderGrouped(schoolId)))
-                    .map(
-                        tuple -> {
-                          long totalStudents = tuple.getT1();
-                          long activeStudents = tuple.getT2();
-                          Map<String, Long> byStatus = tuple.getT3();
-                          Map<String, Long> byGradeLevel = tuple.getT4();
-                          Map<String, Long> byGender = tuple.getT5();
-
-                          // Ensure activeStudents matches byStatus.get("ACTIVE") — but keep T2 for
-                          // consistency
-                          return new StudentStatisticsResponse(
-                              totalStudents, activeStudents, byStatus, byGradeLevel, byGender);
-                        }))
-            .doOnSuccess(resp -> log.info("[{}] Fetched stats: total={}, active={}",
-                    requestId, resp.totalStudents(), resp.activeStudents()));
+                        toCountMap(studentRepository.countByGenderGrouped(schoolId))
+                ))
+                    .map(tuple -> new StudentStatisticsResponse(
+                            tuple.getT1(),
+                            tuple.getT2(),
+                            tuple.getT3(),
+                            tuple.getT4(),
+                            tuple.getT5()
+                    ))
+            .doOnSuccess(resp ->
+                    log.info("[{}] Fetched stats: total={}, active={}", requestId,
+                            resp.totalStudents(), resp.activeStudents()));
     }
 
     @Override
@@ -250,31 +255,12 @@ public class StudentServiceImp implements StudentService {
             });
     }
 
-    private Mono<Map<String, Long>> toCountMap(Flux<Map<String, Object>> flux) {
-        return flux
-                .mapNotNull(map -> {
-                    Object keyObj = map.get("key");
-                    Object countObj = map.get("count");
-
-                    if (keyObj == null) {
-                        log.warn("Skipping null key in grouped count: {}", map);
-                        return null;
-                    }
-                    if (!(countObj instanceof Number)) {
-                        log.error("Invalid count value: {} (expected Number)", countObj);
-                        throw new IllegalStateException("Non-numeric count in aggregation");
-                    }
-
-                    String key = String.valueOf(keyObj).trim().toUpperCase(); // normalize if needed
-                    Long count = ((Number) countObj).longValue();
-                    return Map.entry(key, count);
-                })
-                .filter(Objects::nonNull)
-                .collectMap(
-                        stringLongEntry -> stringLongEntry != null ? stringLongEntry.getKey() : null,
-                        stringLongEntry1 -> stringLongEntry1 != null ? stringLongEntry1.getValue() : null,
-                        HashMap::new
-                );
+    private Mono<Map<String, Long>> toCountMap(Flux<KeyCountProjection> flux) {
+        return flux.collectMap(
+                kc  -> kc.key().toUpperCase(),
+                KeyCountProjection::count,
+                HashMap::new
+        );
     }
 
     private Mono<SchoolDetailsResponse> getSchoolDetails(String schoolCode) {

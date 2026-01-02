@@ -8,6 +8,7 @@ import com.emis.studentsservice.dto.response.StudentResponse;
 import com.emis.studentsservice.dto.response.StudentStatisticsResponse;
 import com.emis.studentsservice.exception.BadRequestException;
 import com.emis.studentsservice.service.StudentService;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 
 import java.lang.reflect.Field;
@@ -43,6 +44,8 @@ public class StudentServiceController {
             .map(Field::getName)
             .collect(Collectors.toSet());
 
+    @Operation(summary = "Create a new student",
+    description = "Create a new student")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Mono<StudentResponse> createStudent(@Valid @RequestBody CreateStudentRequest request) {
@@ -54,6 +57,8 @@ public class StudentServiceController {
 
     }
 
+    @Operation(summary = "Get a student by number",
+    description = "Get a student by number")
     @GetMapping("{studentNumber}")
     @ResponseStatus(HttpStatus.OK)
     public Mono<StudentResponse> getStudentByNumber(@PathVariable String studentNumber,
@@ -65,6 +70,8 @@ public class StudentServiceController {
         .contextWrite(ctx -> ctx.put(REQUEST_ID, requestId));
   }
 
+    @Operation(summary = "Update a student",
+    description = "Update a student")
     @PutMapping("{studentNumber}")
     @ResponseStatus(HttpStatus.OK)
     public Mono<StudentResponse> updateStudent(@PathVariable String studentNumber,
@@ -76,6 +83,8 @@ public class StudentServiceController {
                 .contextWrite(ctx -> ctx.put(REQUEST_ID, requestId));
     }
 
+    @Operation(summary = "Get all students",
+    description = "Get all students from a school")
     @GetMapping("all/{schoolCode}")
     @ResponseStatus(HttpStatus.OK)
     public Flux<StudentResponse> getStudentsBySchoolCode(@PathVariable String schoolCode,
@@ -109,7 +118,9 @@ public class StudentServiceController {
                 .contextWrite(ctx -> ctx.put(REQUEST_ID, requestId));
     }
 
-    @GetMapping("/statistics?schoolCode")
+    @Operation(summary = "Get students statistics",
+    description = "Get students statistics")
+    @GetMapping("/statistics/{schoolCode}")
     public Mono<StudentStatisticsResponse> getStudentStatistics(@PathVariable String schoolCode) {
         String requestId = UUID.randomUUID().toString();
 
@@ -118,6 +129,8 @@ public class StudentServiceController {
                 .contextWrite(ctx -> ctx.put(REQUEST_ID, requestId));
     }
 
+    @Operation(summary = "Get all schools students statistics",
+    description = "Get all schools students statistics")
     @GetMapping("schools/statistics")
     public Mono<ApiResponse<StudentStatisticsResponse>> getAllSchoolsStudentStatistics() {
         String requestId = UUID.randomUUID().toString();
@@ -127,6 +140,8 @@ public class StudentServiceController {
                 .contextWrite(ctx -> ctx.put(REQUEST_ID, requestId));
     }
 
+    @Operation(summary = "Get all students",
+    description = "Get all students")
     @GetMapping
     public Mono<Page<StudentResponse>> getAllStudents(@RequestParam(defaultValue = "0")
                                                           @Min(value = 0, message = "page must not be less than 0")

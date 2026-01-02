@@ -1,7 +1,19 @@
 package com.emis.studentsservice.exception;
 
+
+import lombok.Getter;
+
+@Getter
 public class ArgumentIsNullException extends  RuntimeException {
-    public ArgumentIsNullException(String argumentName) {
-        super("Argument '" + argumentName + "' is null.");
+    private final String fieldName;
+
+    public ArgumentIsNullException(String message) {
+        super(message);
+        this.fieldName = null;
+    }
+
+    public ArgumentIsNullException(String message, String fieldName) {
+        super(message);
+        this.fieldName = fieldName;
     }
 }

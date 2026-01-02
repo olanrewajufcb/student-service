@@ -19,6 +19,8 @@ public interface MedicalMapper {
     @Mapping(target = "chronicConditions", source = "chronicConditions", qualifiedByName = "stringToList")
     @Mapping(target = "createdAt", expression = "java(java.time.LocalDateTime.now())")
     @Mapping(target = "updatedAt", expression = "java(java.time.LocalDateTime.now())")
+    @Mapping(target = "isDeleted", ignore = true)
+    @Mapping(target = "deletedAt", ignore = true)
     MedicalRecord toEntity(MedicalRecordRequest request);
 
     MedicalRecordResponse toResponse(MedicalRecord medicalRecord);

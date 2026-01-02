@@ -10,11 +10,11 @@ CREATE TABLE student_schema.students
     date_of_birth   DATE,
     gender          VARCHAR(20),
     enrollment_date TIMESTAMP,
-    grade_level     grade_level_type,
-    status          student_status DEFAULT 'ACTIVE',
-    orphan_status   orphan_status DEFAULT 'NONE',
-    email           VARCHAR(255),
-    phone           VARCHAR(50),
+    grade_level     VARCHAR(20),
+    status          VARCHAR(20) DEFAULT 'ACTIVE',
+    orphan_status   VARCHAR(20) DEFAULT 'NONE',
+    email           VARCHAR(50),
+    phone           VARCHAR(30),
     address1        TEXT,
     address2        TEXT,
     city            VARCHAR(100),
@@ -41,9 +41,9 @@ CREATE TABLE student_schema.guardians (
                                           address TEXT,
                                           is_primary_contact BOOLEAN,
                                           is_deleted BOOLEAN DEFAULT FALSE,
-                                          deleted_at TIMESTAMPZ  DEFAULT NULL,
-                                          created_at TIMESTAMPZ DEFAULT NOW(),
-                                          updated_at TIMESTAMPZ DEFAULT NOW(),
+                                          deleted_at TIMESTAMPTZ  DEFAULT NULL,
+                                          created_at TIMESTAMPTZ DEFAULT NOW(),
+                                          updated_at TIMESTAMPTZ DEFAULT NOW(),
                                           CONSTRAINT fk_guardian_student FOREIGN KEY (student_id)
                                               REFERENCES student_schema.students(student_id) ON DELETE RESTRICT
 );
@@ -56,13 +56,13 @@ CREATE TABLE student_schema.medical_records (
                                                 chronic_conditions TEXT[],
                                                 notes TEXT,
                                                 special_needs TEXT,
-                                                disability_type disability_type DEFAULT 'NONE',
-                                                disability_level disability_level DEFAULT 'NONE',
+                                                disability_type VARCHAR(20) DEFAULT 'NONE',
+                                                disability_level VARCHAR(20) DEFAULT 'NONE',
                                                 special_education_needs BOOLEAN DEFAULT FALSE,
                                                 is_deleted BOOLEAN DEFAULT FALSE,
-                                                deleted_at TIMESTAMPZ  DEFAULT NULL,
-                                                created_at TIMESTAMPZ DEFAULT NOW(),
-                                                updated_at TIMESTAMPZ DEFAULT NOW(),
+                                                deleted_at TIMESTAMPTZ  DEFAULT NULL,
+                                                created_at TIMESTAMPTZ DEFAULT NOW(),
+                                                updated_at TIMESTAMPTZ DEFAULT NOW(),
 
                                                 CONSTRAINT fk_medical_student FOREIGN KEY (student_id)
                                                     REFERENCES student_schema.students(student_id) ON DELETE RESTRICT
@@ -88,15 +88,15 @@ CREATE TABLE student_schema.enrolment_history (
                                                   enrollment_id BIGSERIAL PRIMARY KEY,
                                                   student_id BIGINT NOT NULL,
                                                   school_year VARCHAR(20),
-                                                  grade_level grade_level_type,
+                                                  grade_level VARCHAR(20),
                                                   school_name VARCHAR(255),
                                                   school_id BIGINT,
                                                   type VARCHAR(50),
                                                   note TEXT,
-                                                  effective_date TIMESTAMPZ,
+                                                  effective_date TIMESTAMPTZ,
                                                   is_deleted BOOLEAN DEFAULT FALSE,
-                                                  deleted_at TIMESTAMPZ  DEFAULT NULL,
-                                                  recorded_at TIMESTAMPZ DEFAULT NOW(),
+                                                  deleted_at TIMESTAMPTZ  DEFAULT NULL,
+                                                  recorded_at TIMESTAMPTZ DEFAULT NOW(),
 
                                                   CONSTRAINT fk_enrolment_student FOREIGN KEY (student_id)
                                                       REFERENCES student_schema.students(student_id) ON DELETE RESTRICT

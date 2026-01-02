@@ -9,5 +9,5 @@ public interface EnrollmentHistoryService {
 
     Mono<EnrollmentResponse> createInitialEnrollment(Student student,  String schoolName);
 
-    Mono<EnrollmentResponse> createEnrollment(Long enrollmentId, EnrollmentHistoryRequest request);
+    Mono<EnrollmentResponse> createEnrollment(Student student, EnrollmentHistoryRequest request);
 }

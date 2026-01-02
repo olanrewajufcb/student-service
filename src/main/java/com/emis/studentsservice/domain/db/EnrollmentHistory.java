@@ -15,5 +15,7 @@ public record EnrollmentHistory(
                                 Long schoolId,
                                 EnrollmentType type,
                                 String note,
+                                Boolean isDeleted,
+                                LocalDateTime deletedAt,
                                 LocalDateTime effectiveDate,
                                 LocalDateTime recordedAt) {}

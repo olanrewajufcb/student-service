@@ -42,7 +42,8 @@ public class Student {
     private String lga;
     private String state;
     private String postalCode;
-    private String country;
+    private Boolean isDeleted;
+    private LocalDate deletedAt;
     private String photoUrl;
     private String createdBy;
     private LocalDateTime createdAt;

@@ -47,12 +47,9 @@ public record CreateStudentRequest(
         @NotNull(message = "enrollment date is required")
         @PastOrPresent(message = "Enrollment date cannot be in the future")
         LocalDateTime enrollmentDate,
-        @NotBlank(message = "Grade level is required")
-        @Pattern(regexp = "^(K|[1-9]|1[0-2])$", message = "Grade level must be K or 1-12")
+        @NotNull(message = "Grade level is required and must be in correct format")
         GradeLevel gradeLevel,
         OrphanStatus orphanStatus,
-        @Valid
-        ContactInfoRequest contactInfo,
         @NotNull(message = "At least one guardian is required")
         @Size(min = 1, message = "At least one guardian is required")
         @Valid
@@ -64,7 +61,6 @@ public record CreateStudentRequest(
 
         String photoUrl
 ) {  public CreateStudentRequest {
-    // Ensure enrollment date is after birth date
     if (dateOfBirth != null
         && enrollmentDate != null
         && enrollmentDate.toLocalDate().isBefore(dateOfBirth.plusYears(3))) {

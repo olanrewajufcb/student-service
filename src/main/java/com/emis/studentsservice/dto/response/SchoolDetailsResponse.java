@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 
 public record SchoolDetailsResponse(Long schoolId,
                                     String schoolCode,          // Unique identifier "SCH-001"
-                                    String name,
+                                    String schoolName,
                                     SchoolType type,
                                     SchoolLevel level,
                                     String address,

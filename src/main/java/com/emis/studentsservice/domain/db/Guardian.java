@@ -1,5 +1,6 @@
 package com.emis.studentsservice.domain.db;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -23,6 +24,8 @@ public class Guardian {
     private String email;
     private String phone;
     private String address;
+    private Boolean isDeleted;
+    private LocalDate deletedAt;
     private Boolean isPrimaryContact;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

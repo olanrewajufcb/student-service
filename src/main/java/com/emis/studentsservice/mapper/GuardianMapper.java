@@ -17,6 +17,8 @@ public interface GuardianMapper {
     @Mapping(target = "studentId", ignore = true)
     @Mapping(target = "createdAt", expression = "java(java.time.LocalDateTime.now())")
     @Mapping(target = "updatedAt", expression = "java(java.time.LocalDateTime.now())")
+    @Mapping(target = "isDeleted", ignore = true)
+    @Mapping(target = "deletedAt", ignore = true)
     Guardian toEntity(GuardianRequest request);
 
     GuardianResponse toResponse(Guardian guardian);

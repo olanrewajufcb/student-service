@@ -33,14 +33,15 @@ public class EnrollmentHistoryServiceImpl implements EnrollmentHistoryService {
                 "Initial student enrollment",
                 LocalDateTime.now(),
                 LocalDateTime.now());
-        return createEnrollment(student.getStudentId(),  enrollmentRequest);
+        return createEnrollment(student,  enrollmentRequest);
 
     }
 
-    public Mono<EnrollmentResponse> createEnrollment(Long studentId, EnrollmentHistoryRequest request) {
-        log.info("Creating enrollment history for student: {}", studentId);
 
-        return Mono.defer(() -> createEnrollmentEntity(studentId, request))
+    public Mono<EnrollmentResponse> createEnrollment(Student student, EnrollmentHistoryRequest request) {
+        log.info("Creating enrollment history for student: {}", student);
+
+        return Mono.defer(() -> createEnrollmentEntity(student, request))
                 .flatMap(enrollmentHistoryRepository::save)
                 .map(mapper::toResponse)
                 .doOnSuccess(enrollment ->
@@ -57,18 +58,21 @@ public class EnrollmentHistoryServiceImpl implements EnrollmentHistoryService {
         return currentYear + "-" + nextYear;
     }
 
-    private Mono<EnrollmentHistory> createEnrollmentEntity(Long studentId, EnrollmentHistoryRequest request) {
-        return Mono.fromCallable(() -> new EnrollmentHistory(
+    private Mono<EnrollmentHistory> createEnrollmentEntity(Student student, EnrollmentHistoryRequest request) {
+    return Mono.fromCallable(
+        () ->
+            new EnrollmentHistory(
                 null,
-                studentId,
+                student.getStudentId(),
                 request.schoolYear(),
                 request.gradeLevel(),
                 request.schoolName(),
-                null, // schoolId would be resolved from school service
+                student.getSchoolId(),
                 request.type(),
                 request.notes(),
+                Boolean.FALSE,
+                null,
                 request.effectiveDate(),
-                LocalDateTime.now()
-        ));
+                LocalDateTime.now()));
     }
 }
