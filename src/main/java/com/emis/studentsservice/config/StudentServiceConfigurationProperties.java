@@ -11,10 +11,14 @@ import org.springframework.context.annotation.Configuration;
 @Getter
 @Setter
 @ConfigurationProperties(prefix = "emis.services")
-public class SchoolServiceConfigurationProperties {
+public class StudentServiceConfigurationProperties {
 
     @NestedConfigurationProperty
     private SchoolServiceProperties configuration;
+
+    private String storageBaseUrl;
+    private int timeout;
+
 
 
     @Getter

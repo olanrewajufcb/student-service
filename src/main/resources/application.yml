@@ -26,6 +26,22 @@ spring:
     validate-on-migrate: true
     out-of-order: false
 
+  cloud:
+    stream:
+      defaultBinder: kafka
+      bindings:
+        attendanceEvents-in-0:
+          destination: attendance.events.v1
+          group: student-service-group
+
+        studentReportEvents-in-0:
+          destination: student-report.events.v1
+          group: student-report-group
+
+        studentReportEvents-out-0:
+          destination: student-report.events.v1
+
+
   #  security:
   #    oauth2:
   #      resourceserver:
@@ -40,6 +56,12 @@ emis:
       base-url: ${EMIS_SERVICE_URL:http://localhost:8082}
       get-school-details-url: ${emis.services.configuration.base-url}/api/v1/schools/{schoolCode}
       validate-school-exists-url: ${emis.service.configuration.base-url}/schools/validate/{schoolCode}
+
+    storage-base-url: ${EMIS_STORAGE_URL:http://localhost:8086/reports}
+
+    timeout: 5
+
+
 
 
 server:

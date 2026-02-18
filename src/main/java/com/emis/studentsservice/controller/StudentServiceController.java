@@ -143,7 +143,8 @@ public class StudentServiceController {
     @Operation(summary = "Get all students",
     description = "Get all students")
     @GetMapping
-    public Mono<Page<StudentResponse>> getAllStudents(@RequestParam(defaultValue = "0")
+    public Mono<Page<StudentResponse>> getAllStudents(
+            @RequestParam(defaultValue = "0")
                                                           @Min(value = 0, message = "page must not be less than 0")
                                                           int page,
                                                       @RequestParam(defaultValue = "10")

@@ -9,7 +9,6 @@ import org.mapstruct.*;
 @Mapper(componentModel = "spring")
 public interface StudentMapper {
 
-
     @Mapping(target = "studentId", ignore = true)
     @Mapping(target = "schoolId", source = "request.schoolId")
     @Mapping(target = "status", constant = "ACTIVE")

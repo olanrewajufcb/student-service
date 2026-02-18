@@ -21,6 +21,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeoutException;
 
 import lombok.RequiredArgsConstructor;
@@ -37,7 +38,7 @@ import reactor.core.publisher.Mono;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class StudentServiceImp implements StudentService {
+public class StudentServiceImpl implements StudentService {
 
     private final StudentRepository studentRepository;
     private final GuardianService guardianService;
@@ -101,7 +102,7 @@ public class StudentServiceImp implements StudentService {
         .flatMap(
             existingStudent -> {
               log.info("Found existing student with number: {}", studentNumber);
-              if (existingStudent.getStatus() == StudentStatus.INACTIVE) {
+              if (Objects.equals(existingStudent.getStatus(), StudentStatus.INACTIVE.name())) {
                   return Mono.error(
                       new StudentInactiveException(
                           "Student with number '"
@@ -137,7 +138,7 @@ public class StudentServiceImp implements StudentService {
                   .switchIfEmpty(
                       Mono.error(
                           new StudentNotFoundException(
-                              "No students found for the the given school"
+                              "No students found for the the given school "
                                   + schoolCode
                                   + ". "
                                   + requestId)))
@@ -163,7 +164,7 @@ public class StudentServiceImp implements StudentService {
 
         return studentRepository.findByStudentNumberAndSchoolCode(studentNumber,  schoolCode)
                 .switchIfEmpty(Mono.error(new StudentNotFoundException(
-                        "Student with number '" + studentNumber + "' not found.")))
+                        "Student with number '" + studentNumber + "' not found for the given " + schoolCode + ". " + requestId)))
                 .map(studentMapper::toResponse)
                 .doOnSuccess(student -> log.info("Retrieved student with number '{}'.", studentNumber))
                 .doOnError(error -> log.error("Failed to retrieve student: {}", error.getMessage()));

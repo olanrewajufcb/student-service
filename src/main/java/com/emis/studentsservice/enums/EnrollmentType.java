@@ -4,10 +4,11 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum EnrollmentType {
+    NEW,
     INITIAL_ENROLLMENT,
     GRADE_PROMOTION,
-    TRANSFER_IN,
-    TRANSFER_OUT,
+    TRANSFERRED_IN,
+    TRANSFERRED_OUT,
     RETENTION;
 
     @JsonCreator

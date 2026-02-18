@@ -1,15 +1,14 @@
 package com.emis.studentsservice.repository;
 
 import com.emis.studentsservice.domain.db.Student;
+import com.emis.studentsservice.service.report.model.StudentListReportRow;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.r2dbc.repository.R2dbcRepository;
-import org.yaml.snakeyaml.util.Tuple;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
-import java.util.Map;
 
 public interface StudentRepository extends R2dbcRepository<Student, Long> {
 
@@ -20,8 +19,8 @@ public interface StudentRepository extends R2dbcRepository<Student, Long> {
     """)
     Flux<Student> findBySchoolId(Long schoolId, int size, long offset);
 
-    @Query("SELECT * FROM students WHERE class_level = :classLevel")
-    Flux<Student> findByClassLevel(String classLevel);
+    @Query("SELECT * FROM students WHERE grade_level = $1")
+    Flux<Student> findByGradeLevel(String gradeLevel);
 
     @Query("""
         SELECT s.* FROM students s
@@ -186,4 +185,22 @@ Mono<Long> countBySchoolIdAndGradeLevel(Long schoolId, String gradeLevel);
     ORDER BY student_id LIMIT :size OFFSET :offset
     """)
     Flux<Student> findBySchoolCode(String schoolCode, int size, long offset);
+
+
+
+  @Query("""
+    SELECT
+        student_number AS studentNumber,
+        CONCAT(first_name, ' ', last_name) AS fullName,
+        student_id AS studentId,
+        school_code AS schoolCode,
+        school_name AS schoolName,
+        academic_year AS academicYear,
+        status
+    FROM student_schema.students
+    WHERE school_id = $1
+      AND is_deleted = false
+    ORDER BY last_name, first_name
+""")
+  Flux<StudentListReportRow> findBySchoolCode(String schoolCode);
 }

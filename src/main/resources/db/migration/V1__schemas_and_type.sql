@@ -11,12 +11,10 @@ CREATE SCHEMA IF NOT EXISTS student_schema AUTHORIZATION student_user;
 
 GRANT USAGE, CREATE ON SCHEMA student_schema TO student_user;
 
-ALTER DEFAULT PRIVILEGES FOR USER student_user
-IN SCHEMA student_schema
+ALTER DEFAULT PRIVILEGES IN SCHEMA student_schema
 GRANT ALL ON TABLES TO student_user;
 
-ALTER DEFAULT PRIVILEGES FOR USER student_user
-IN SCHEMA student_schema
+ALTER DEFAULT PRIVILEGES IN SCHEMA student_schema
 GRANT ALL ON SEQUENCES TO student_user;
 
 -- =====================

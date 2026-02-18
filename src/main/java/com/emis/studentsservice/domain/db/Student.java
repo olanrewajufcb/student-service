@@ -29,11 +29,11 @@ public class Student {
     private String firstName;
     private String lastName;
     private LocalDate dateOfBirth;
-    private Gender gender;
+    private String gender;
     private LocalDateTime enrollmentDate;
-    private GradeLevel gradeLevel;
-    private StudentStatus status;
-    private OrphanStatus orphanStatus;
+    private String gradeLevel;
+    private String status;
+    private String orphanStatus;
     private String email;
     private String phone;
     private String address1;

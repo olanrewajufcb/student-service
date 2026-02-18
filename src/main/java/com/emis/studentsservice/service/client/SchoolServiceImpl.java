@@ -1,6 +1,6 @@
 package com.emis.studentsservice.service.client;
 
-import com.emis.studentsservice.config.SchoolServiceConfigurationProperties;
+import com.emis.studentsservice.config.StudentServiceConfigurationProperties;
 import com.emis.studentsservice.dto.response.SchoolDetailsResponse;
 import com.emis.studentsservice.exception.SchoolNotFoundException;
 import com.emis.studentsservice.exception.SchoolServiceUnavailableException;
@@ -18,7 +18,7 @@ import reactor.core.publisher.Mono;
 public class SchoolServiceImpl implements SchoolService {
 
     private final ClientHelper client;
-    private final SchoolServiceConfigurationProperties properties;
+    private final StudentServiceConfigurationProperties properties;
 
     @Override
     public Mono<SchoolDetailsResponse> getSchoolDetails(String schoolCode) {

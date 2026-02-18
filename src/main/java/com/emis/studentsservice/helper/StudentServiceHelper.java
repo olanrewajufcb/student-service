@@ -15,7 +15,7 @@ public class StudentServiceHelper {
     public Mono<Void> validateStudentExists(Long studentId) {
         return studentRepository.existsById(studentId)
                 .flatMap(exists -> Boolean.TRUE.equals(exists) ? Mono.empty() :
-                        Mono.error(new StudentNotFoundException(studentId)));
+                        Mono.error(new StudentNotFoundException("student does not exist")));
     }
 
 
@@ -30,7 +30,7 @@ public class StudentServiceHelper {
             student.setDateOfBirth(request.dateOfBirth());
         }
         if (request.gradeLevel() != null) {
-            student.setGradeLevel(request.gradeLevel());
+            student.setGradeLevel(request.gradeLevel().name());
         }
         if (request.address1() != null) {
             student.setAddress1(request.address1());

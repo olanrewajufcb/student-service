@@ -222,6 +222,28 @@ public class GlobalExceptionHandler {
             return response;
         }
 
+    @ExceptionHandler(StudentNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public Map<String, Object> handleStudentNotFound(StudentNotFoundException ex) {
+        log.error("Student not found: {}", ex.getMessage());
+
+        Map<String, Object> response = new HashMap<>();
+        response.put(TIMESTAMP, LocalDateTime.now());
+        response.put(STATUS, HttpStatus.NOT_FOUND.value());
+        response.put(ERROR, "Not Found");
+        response.put(MESSAGE, ex.getMessage());
+
+        // Add field information if available
+        if (ex.getFieldName() != null) {
+            response.put(FIELD, ex.getFieldName());
+        }
+        if (ex.getSearchValue() != null) {
+            response.put("searchValue", ex.getSearchValue());
+        }
+
+        return response;
+    }
+
         @ExceptionHandler(Exception.class)
         @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
         public Map<String, Object> handleGenericException(Exception ex) {

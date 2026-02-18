@@ -51,7 +51,7 @@ public class MedicalRecordServiceImpl implements MedicalRecordService {
                 .flatMap(exists ->
                         Boolean.TRUE.equals(exists)
                                 ? Mono.empty()
-                                : Mono.error(new StudentNotFoundException(studentId)));
+                                : Mono.error(new StudentNotFoundException("studentId")));
     }
 
     private Mono<Void> checkMedicalRecordExists(Long studentId) {

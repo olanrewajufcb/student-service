@@ -1,6 +1,5 @@
 package com.emis.studentsservice.dto.request;
 
-import com.emis.studentsservice.dto.ContactInfoRequest;
 import com.emis.studentsservice.enums.Gender;
 import com.emis.studentsservice.enums.GradeLevel;
 import com.emis.studentsservice.enums.OrphanStatus;
