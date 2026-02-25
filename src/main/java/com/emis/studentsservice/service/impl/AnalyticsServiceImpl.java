@@ -43,6 +43,8 @@ public class AnalyticsServiceImpl implements AnalyticsService {
 
     @Scheduled(cron = "0 0 3 * * ?")
     public void refreshDropoutRisk() {
-        studentEnrollmentRepository.refreshDropoutRiskView().subscribe();
+        studentEnrollmentRepository.refreshDropoutRiskView()
+                .then(studentEnrollmentRepository.refreshDropoutRiskLevelView())
+                .subscribe();
     }
 }

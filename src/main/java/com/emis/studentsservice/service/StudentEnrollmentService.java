@@ -1,10 +1,8 @@
 package com.emis.studentsservice.service;
 
-import com.emis.studentsservice.dto.request.PromotionRequest;
 import com.emis.studentsservice.dto.request.StudentDropoutRequest;
 import com.emis.studentsservice.dto.request.StudentEnrollmentRequest;
 import com.emis.studentsservice.dto.request.StudentTransferRequest;
-import com.emis.studentsservice.dto.response.PromotionResponse;
 import com.emis.studentsservice.dto.response.StudentDropoutResponse;
 import com.emis.studentsservice.dto.response.StudentEnrollmentResponse;
 import org.springframework.data.domain.Page;
@@ -23,9 +21,7 @@ public interface StudentEnrollmentService {
                                                     StudentTransferRequest request,
        String requestId);
 
-    Mono<PromotionResponse> promoteStudent(String studentNumber,
-                                           PromotionRequest request,
-                                           String requestId);
+
 
     Mono<StudentDropoutResponse> dropoutStudent(String studentNumber,
                                                 StudentDropoutRequest request,

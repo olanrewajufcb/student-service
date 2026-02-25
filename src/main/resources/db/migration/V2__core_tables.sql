@@ -205,6 +205,7 @@ CREATE TABLE student_schema.student_attendance_projection (
 
                                                               attendance_id BIGINT PRIMARY KEY,
                                                               student_number VARCHAR(50) NOT NULL,
+                                                              term_id BIGINT NOT NULL,
                                                               section_id BIGINT NOT NULL,
                                                               school_code VARCHAR(50) NOT NULL,
                                                               notes TEXT,

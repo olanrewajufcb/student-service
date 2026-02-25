@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
+import java.util.UUID;
 
 @Data
 @Builder
@@ -13,11 +14,11 @@ import java.time.Instant;
 @NoArgsConstructor
 public class DomainEvent<T> {
 
-    private String eventId;
+    private UUID eventId;
     private String eventType;
     private int eventVersion;
     private Instant occurredAt;
     private String producer;
-    private String correlationId;
+    private UUID correlationId;
     private T data;
 }

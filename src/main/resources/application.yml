@@ -27,8 +27,9 @@ spring:
     out-of-order: false
 
   cloud:
+    function:
+      definition:  attendanceEvents;studentReportEvents
     stream:
-      defaultBinder: kafka
       bindings:
         attendanceEvents-in-0:
           destination: attendance.events.v1
@@ -40,6 +41,10 @@ spring:
 
         studentReportEvents-out-0:
           destination: student-report.events.v1
+
+      kafka:
+        binder:
+          brokers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
 
 
   #  security:

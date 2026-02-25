@@ -106,31 +106,7 @@ public class StudentEnrollmentServiceImpl implements StudentEnrollmentService {
                 });
     }
 
-    @Override
-    public Mono<PromotionResponse> promoteStudent(String studentNumber, PromotionRequest request, String requestId) {
-        return studentRepository.findByStudentNumber(studentNumber)
-                .switchIfEmpty(Mono.error(new StudentNotFoundException("Student not found")))
 
-                .flatMap(student ->
-                        studentEnrollmentRepository
-                                .findByStudentIdAndSchoolIdAndAcademicYear(
-                                        student.getStudentId(),
-                                        student.getSchoolId(),
-                                        request.fromAcademicYear()
-                                )
-                                .switchIfEmpty(
-                                        Mono.error(new ValidationException("No active enrollment found"))
-                                )
-                                .flatMap(current -> {
-
-                                    if (!current.getSchoolCode().equals(request.schoolCode())) {
-                                        return Mono.error(new ValidationException("School mismatch"));
-                                    }
-
-                                    return executePromotion(student, current, request);
-                                })
-                );
-    }
 
     @Override
     public Mono<StudentDropoutResponse> dropoutStudent(String studentNumber, StudentDropoutRequest request, String requestId) {

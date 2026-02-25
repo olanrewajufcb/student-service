@@ -9,6 +9,7 @@ import lombok.*;
 @Builder
 public class StudentDropoutRiskResponse {
     Long studentId;
+    Long termId;
     String studentNumber;
     String riskLevel;
     Integer absentDays;

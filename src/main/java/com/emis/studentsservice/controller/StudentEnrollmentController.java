@@ -75,19 +75,6 @@ public class StudentEnrollmentController {
                 .transferStudent(studentNumber, studentTransferRequest, requestId)
                 .contextWrite(ctx -> ctx.put("requestId", requestId));
     }
-
-    @Operation(summary = "Promote a student to the next class",
-    description = "Promote a student to the next class")
-    @PostMapping("/{studentNumber}/promote")
-    @ResponseStatus(HttpStatus.OK)
-    public Mono<PromotionResponse> promoteStudentToNextClass(
-            @PathVariable String studentNumber, @RequestBody @Valid PromotionRequest request) {
-        log.info("Promoting student {} to the next class", studentNumber);
-        String requestId = UUID.randomUUID().toString();
-        return studentEnrollmentService
-                .promoteStudent(studentNumber, request, requestId)
-                .contextWrite(ctx -> ctx.put("requestId", requestId));
-    }
     @Operation(summary = "Dropout a student from school",
     description = "Dropout a student from school")
     @PostMapping("/{studentNumber}/dropout")
@@ -102,7 +89,7 @@ public class StudentEnrollmentController {
                 .contextWrite(ctx -> ctx.put("requestId", requestId));
     }
 
-    @Operation(summary = "Get all student enrollments in a school",
+    @Operation(summary = "Get all students enrollments in a school",
             description = "Get all student enrollments")
     @GetMapping("/enrollments/current")
     @ResponseStatus(HttpStatus.OK)

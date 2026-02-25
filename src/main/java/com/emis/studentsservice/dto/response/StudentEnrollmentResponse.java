@@ -2,10 +2,13 @@ package com.emis.studentsservice.dto.response;
 
 import com.emis.studentsservice.domain.db.Student;
 import com.emis.studentsservice.domain.db.StudentEnrollment;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 import java.time.LocalDate;
 
-
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public record StudentEnrollmentResponse(
         Long enrollmentId,
         String studentNumber,

@@ -1,22 +1,15 @@
 
-CREATE MATERIALIZED VIEW student_schema.student_analytics_enrollment_summary AS
-SELECT
-    school_id,
-    school_code,
-    academic_year,
-    COUNT(*) FILTER (WHERE enrollment_status = 'ACTIVE') AS total_students,
-    COUNT(*) FILTER (WHERE enrollment_type = 'NEW_ADMISSION') AS new_admissions,
-    COUNT(*) FILTER (WHERE enrollment_type = 'TRANSFER_IN') AS transfer_ins,
-    COUNT(*) FILTER (WHERE enrollment_type = 'RE_ENROLLMENT') AS re_enrollments,
-    COUNT(*) FILTER (WHERE enrollment_status = 'DROPPED_OUT') AS dropouts
-FROM student_schema.student_enrollments
-WHERE is_deleted = false
-GROUP BY school_id, school_code, academic_year;
+DROP MATERIALIZED VIEW IF EXISTS student_schema.student_dropout_risk_level;
 
 
-CREATE INDEX idx_student_analytics_school_year
-    ON student_schema.student_analytics_enrollment_summary
-        (school_code, academic_year);
+-- Drop the materialized view first
+DROP MATERIALIZED VIEW IF EXISTS student_schema.mv_student_dropout_risk;
+
+-- Modify the table structure
+ALTER TABLE student_schema.student_attendance_projection
+DROP COLUMN attendance_date,
+ADD COLUMN lesson_date DATE NOT NULL;
+
 
 CREATE MATERIALIZED VIEW student_schema.mv_student_dropout_risk AS
 WITH base_calculation AS (
@@ -45,7 +38,7 @@ WITH base_calculation AS (
     FROM student_schema.student_enrollments s
              LEFT JOIN student_schema.student_attendance_projection a
                        ON a.student_number = s.student_number
-                           AND a.attendance_date >= CURRENT_DATE - INTERVAL '30 days'
+                           AND a.lesson_date >= CURRENT_DATE - INTERVAL '30 days'
     WHERE s.enrollment_status = 'ACTIVE'
     GROUP BY s.student_id, s.student_number, s.school_id, s.school_code, s.academic_year, a.term_id
 )

@@ -35,13 +35,13 @@ public interface StudentEnrollmentRepository extends ReactiveCrudRepository<Stud
 
     @Query("""
 SELECT
-    school_id AS schoolId,
-    school_code AS schoolCode,
-    academic_year AS academicYear,
-    total_students AS totalStudents,
-    new_admissions AS newAdmissions,
-    transfer_ins AS transferIns,
-    re_enrollments AS reEnrollments,
+    school_id AS school_id,
+    school_code AS school_code,
+    academic_year AS academic_year,
+    total_students AS total_students,
+    new_admissions AS new_admissions,
+    transfer_ins AS transfer_ins,
+    re_enrollments AS re_enrollments,
     dropouts AS dropouts
 FROM student_schema.student_analytics_enrollment_summary
 WHERE school_code = $1 AND academic_year = $2
@@ -53,13 +53,13 @@ WHERE school_code = $1 AND academic_year = $2
 
     @Query("""
 SELECT
-    school_id AS schoolId,
-    school_code AS schoolCode,
-    academic_year AS academicYear,
-    total_students AS totalStudents,
-    new_admissions AS newAdmissions,
-    transfer_ins AS transferIns,
-    re_enrollments AS reEnrollments,
+    school_id AS school_id,
+    school_code AS school_code,
+    academic_year AS academic_year,
+    total_students AS total_students,
+    new_admissions AS new_admissions,
+    transfer_ins AS transfer_ins,
+    re_enrollments AS re_enrollments,
     dropouts AS dropouts
 FROM student_schema.student_analytics_enrollment_summary
 WHERE academic_year = $1
@@ -71,25 +71,30 @@ WHERE academic_year = $1
     @Query("REFRESH MATERIALIZED VIEW CONCURRENTLY student_schema.student_analytics_enrollment_summary")
     Mono<Void> refreshEnrollmentAnalytics();
 
+
     @Query("""
 SELECT
-    student_id AS studentId,
-    student_number AS studentNumber,
-    school_code AS schoolCode,
-    academic_year AS academicYear,
-    attendance_rate AS attendanceRate,
-    absent_days AS absentDays,
-    risk_score AS riskScore,
-    risk_level AS riskLevel
-FROM student_schema.student_dropout_risk_level
-WHERE school_code = $1
-ORDER BY risk_score DESC
+    r.student_id AS student_id,
+    r.student_number AS student_number,
+    r.school_code AS school_code,
+    r.academic_year AS academic_year,
+    r.attendance_rate AS attendance_rate,
+    r.absent_days AS absent_days,
+    r.risk_score AS risk_score,
+    l.risk_level AS risk_level
+FROM student_schema.mv_student_dropout_risk r
+JOIN student_schema.student_dropout_risk_level l ON r.student_id = l.student_id AND r.academic_year = l.academic_year
+WHERE r.school_code = $1
+ORDER BY r.risk_score DESC
 """)
     Flux<StudentDropoutRiskResponse> findDropoutRiskBySchool(String schoolCode);
 
 
     @Query("REFRESH MATERIALIZED VIEW CONCURRENTLY student_schema.mv_student_dropout_risk")
     Mono<Void> refreshDropoutRiskView();
+
+    @Query("REFRESH MATERIALIZED VIEW CONCURRENTLY student_schema.student_dropout_risk_level")
+    Mono<Void> refreshDropoutRiskLevelView();
 
     @Query("""
     SELECT se.*

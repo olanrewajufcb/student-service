@@ -1,10 +1,12 @@
 package com.emis.studentsservice.dto.response;
 
 import com.emis.studentsservice.enums.StudentStatus;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public record StudentResponse(
          Long studentId,
          Long schoolId,
