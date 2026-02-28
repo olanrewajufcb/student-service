@@ -1,6 +1,6 @@
 package com.emis.studentsservice.service.report.impl;
 
-import com.emis.studentsservice.config.StudentServiceConfigurationProperties;
+import com.emis.studentsservice.config.StudentConfigurationProperties;
 import com.emis.studentsservice.service.report.ReportFileStorage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -15,7 +15,7 @@ import java.nio.file.Paths;
 @Component
 public class LocalReportStorage implements ReportFileStorage {
 
-    private final StudentServiceConfigurationProperties properties;
+    private final StudentConfigurationProperties properties;
 
     private static final Path ROOT = Paths.get("/var/emis/reports");
 

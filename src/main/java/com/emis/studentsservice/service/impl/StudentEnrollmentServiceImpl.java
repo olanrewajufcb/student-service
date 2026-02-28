@@ -1,6 +1,6 @@
 package com.emis.studentsservice.service.impl;
 
-import com.emis.studentsservice.config.StudentServiceConfigurationProperties;
+import com.emis.studentsservice.config.StudentConfigurationProperties;
 import com.emis.studentsservice.domain.db.Student;
 import com.emis.studentsservice.domain.db.StudentEnrollment;
 import com.emis.studentsservice.dto.request.PromotionRequest;
@@ -32,7 +32,6 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
-import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -42,7 +41,7 @@ public class StudentEnrollmentServiceImpl implements StudentEnrollmentService {
     private final StudentRepository studentRepository;
     private final TransactionalOperator transactionalOperator;
     private final SchoolService schoolService;
-    private final StudentServiceConfigurationProperties properties;
+    private final StudentConfigurationProperties properties;
     @Override
     public Mono<StudentEnrollmentResponse> createStudentEnrollment(
             String studentNumber, StudentEnrollmentRequest request, String requestId) {

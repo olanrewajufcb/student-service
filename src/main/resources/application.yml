@@ -47,11 +47,24 @@ spring:
           brokers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
 
 
-  #  security:
-  #    oauth2:
-  #      resourceserver:
-  #        jwt:
-  #          issuer-uri: http://localhost:8080/realms/emis
+    security:
+      oauth2:
+        resourceserver:
+          jwt:
+            issuer-uri: http://localhost:8080/realms/emis
+
+        client:
+          registration:
+            student-service:
+              client-id: emis-student-service
+              client-secret: ${STUDENT_SERVICE_SECRET:secret}
+              authorization-grant-type: client_credentials
+              scope: openid
+          provider:
+            keycloak:
+              issuer-uri: http://localhost:8080/realms/emis
+
+
   lifecycle:
     timeout-per-shutdown-phase: 15s
 
@@ -65,6 +78,21 @@ emis:
     storage-base-url: ${EMIS_STORAGE_URL:http://localhost:8086/reports}
 
     timeout: 5
+    actions:
+      create-student:
+        roles:
+          - SYSTEM_ADMIN
+          - STATE_ADMIN
+          - SCHOOL_ADMIN
+
+      view-student:
+       roles:
+         - SYSTEM_ADMIN
+         - STATE_ADMIN
+         - SCHOOL_ADMIN
+         - SCHOOL_TEACHER
+         - STUDENT
+         - PARENT
 
 
 
