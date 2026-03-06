@@ -1,10 +1,11 @@
 package com.emis.studentsservice.config;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.core.GrantedAuthority;
@@ -16,7 +17,7 @@ import reactor.core.publisher.Flux;
 
 @Configuration
 @EnableWebFluxSecurity
-@EnableMethodSecurity
+@EnableReactiveMethodSecurity
 public class SecurityConfig {
 
     @Bean
@@ -42,26 +43,34 @@ public class SecurityConfig {
     @Bean
     public ReactiveJwtAuthenticationConverter jwtAuthenticationConverter() {
         ReactiveJwtAuthenticationConverter converter = new ReactiveJwtAuthenticationConverter();
-        converter.setJwtGrantedAuthoritiesConverter(this::extractAuthoritiesFromJwt);
+        converter.setJwtGrantedAuthoritiesConverter(
+                jwt -> {
+                    List<GrantedAuthority> authorities = new ArrayList<>();
+                    if (jwt.hasClaim("roles")) {
+                        Object roles = jwt.getClaim("roles");
+                        if (roles instanceof Collection<?> rolesList) {
+                            rolesList.stream()
+                                    .map(Object::toString)
+                                    .forEach(role -> authorities.add(
+                                            new SimpleGrantedAuthority("ROLE_" + role.toUpperCase())));
+                        }
+                    }
+
+                    if (isServiceToken(jwt)) {
+                        authorities.add(new SimpleGrantedAuthority("ACTOR_SERVICE"));
+                    } else {
+                        authorities.add(new SimpleGrantedAuthority("ACTOR_USER"));
+                    }
+                    return Flux.fromIterable(authorities);
+                });
         return converter;
     }
-    private Flux<GrantedAuthority> extractAuthoritiesFromJwt(Jwt jwt) {
-        List<String> roles = jwt.getClaimAsStringList("roles");
-        if(roles == null || roles.isEmpty()) return Flux.empty();
 
-        return Flux.fromStream(roles.stream()
-                .map(this::toGrantedAuthority)
-                .filter(Objects::nonNull));
-    }
 
-    private GrantedAuthority toGrantedAuthority(String role) {
-        if(role == null) return null;
-
-        String cleanedRole = role.trim();
-        if(cleanedRole.isEmpty()) return null;
-        String upper = cleanedRole.toUpperCase();
-        String prefixed = upper.startsWith("ROLE_") ? upper : "ROLE_" + upper;
-        return new SimpleGrantedAuthority(prefixed);
-
+    private boolean isServiceToken(Jwt jwt) {
+        String roles = jwt.getClaimAsString("roles");
+        String preferredUsername =  jwt.getClaimAsString("preferred_username");
+        return roles != null && roles.contains("INTERNAL_SERVICE")
+                || preferredUsername != null && preferredUsername.startsWith("service-account");
     }
 }

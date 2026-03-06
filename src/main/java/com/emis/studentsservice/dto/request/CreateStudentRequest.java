@@ -59,7 +59,7 @@ public record CreateStudentRequest(
 
 
         String photoUrl
-) {  public CreateStudentRequest {
+)implements HasSchoolCode {  public CreateStudentRequest {
     if (dateOfBirth != null
         && enrollmentDate != null
         && enrollmentDate.toLocalDate().isBefore(dateOfBirth.plusYears(3))) {
@@ -78,4 +78,5 @@ public record CreateStudentRequest(
             );
         }
     }
-}}
+}
+}

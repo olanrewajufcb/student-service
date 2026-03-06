@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -244,19 +245,18 @@ public class GlobalExceptionHandler {
         return response;
     }
 
-        @ExceptionHandler(Exception.class)
-        @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-        public Map<String, Object> handleGenericException(Exception ex) {
-            log.error("Unexpected error: ", ex);
+    @ExceptionHandler(AuthorizationDeniedException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public Map<String, Object> handleAuthorizationDenied(AuthorizationDeniedException ex) {
+        log.error("Authorization denied: ", ex);
 
-            Map<String, Object> response = new HashMap<>();
-            response.put(TIMESTAMP, LocalDateTime.now());
-            response.put(STATUS, HttpStatus.INTERNAL_SERVER_ERROR.value());
-            response.put(ERROR, "Internal Server Error");
-            response.put(MESSAGE, "An unexpected error occurred");
-            response.put("details", ex.getMessage());
+        Map<String, Object> response = new HashMap<>();
+        response.put(TIMESTAMP, LocalDateTime.now());
+        response.put(STATUS, HttpStatus.FORBIDDEN.value());
+        response.put(ERROR, "Forbidden");
+        response.put(MESSAGE, "Access denied");
 
-            return response;
-        }
+        return response;
+    }
 
 }

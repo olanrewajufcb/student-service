@@ -1,56 +1,114 @@
 package com.emis.studentsservice.security;
 
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
+import java.util.*;
+
+import com.emis.studentsservice.enums.ActorType;
 import com.emis.studentsservice.enums.UserRole;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+import org.springframework.stereotype.Component;
+import reactor.core.publisher.Mono;
 
+@Slf4j
+@Component
+@RequiredArgsConstructor
 public class ActorContextFactory {
-    private ActorContextFactory() {
-    }
 
+    public Mono<ActorContext> fromAuthentication(Authentication authentication) {
 
-    public static ActorContext from(Jwt jwt) {
-
-        String clientId = jwt.getClaimAsString("client_id");
-        String username = jwt.getClaimAsString("preferred_username");
-
-        if (clientId != null && username == null) {
-            return new ServiceActorContext(
-                    clientId,
-                    extractScopes(jwt),
-                    extractAuthorities(jwt)
-            );
+        if (!(authentication instanceof JwtAuthenticationToken jwtAuth)) {
+            return Mono.error(new IllegalStateException("Invalid authentication type"));
         }
 
-        return new UserActorContext(
-                username,
-                jwt.getClaimAsString("schoolCode"),
-                extractUserRoles(jwt),
-                jwt.getClaimAsString("lga"),
-                jwt.getClaimAsString("state")
+        Jwt jwt = jwtAuth.getToken();
+
+        return Mono.defer(() -> {
+
+            String username = jwt.getClaimAsString("preferred_username");
+
+            boolean isService = isServiceToken(jwt);
+
+            if (isService) {
+                return buildServiceActor(jwt, username);
+            } else {
+                return buildUserActor(jwt, username);
+            }
+        });
+    }
+
+    private boolean isServiceToken(Jwt jwt) {
+        String preferredUsername = jwt.getClaimAsString("preferred_username");
+
+        return preferredUsername != null &&
+                         preferredUsername.startsWith("service-account");
+    }
+
+    private Mono<ActorContext> buildUserActor(Jwt jwt, String username) {
+
+        return Mono.just(
+                ActorContext.builder()
+                        .type(ActorType.USER)
+                        .username(username)
+                        .schoolCode(extractSchoolCode(jwt))
+                        .email(jwt.getClaimAsString("email"))
+                        .userRoles(extractRealmRoles(jwt))
+                        .build()
         );
     }
 
-    private static Set<UserRole> extractUserRoles(Jwt jwt) {
-        List<String> roles = jwt.getClaimAsStringList("roles");
-        if (roles == null) return Set.of();
-
-        return roles.stream()
-                .map(String::toUpperCase)
-                .map(UserRole::valueOf)
-                .collect(Collectors.toSet());
+    private String extractSchoolCode(Jwt jwt) {
+        if (jwt.hasClaim("schoolCode")) {
+            return jwt.getClaimAsString("schoolCode");
+        }
+        return jwt.getClaimAsString("school_code");
     }
 
-    private static Set<String> extractScopes(Jwt jwt) {
-        List<String> scopes = jwt.getClaimAsStringList("scope");
-        return scopes == null ? Set.of() : Set.copyOf(scopes);
+    private Set<UserRole> extractRealmRoles(Jwt jwt) {
+        Set<UserRole> roles = new HashSet<>();
+
+        if (jwt.hasClaim("roles")) {
+            Object rolesClaim = jwt.getClaim("roles");
+            if (rolesClaim instanceof Collection<?> rolesList) {
+                log.info("JWT roles claim: {}", rolesList);
+                rolesList.stream()
+                        .map(Object::toString)
+                        .map(UserRole::fromString)
+                        .filter(Objects::nonNull)
+                        .forEach(roles::add);
+            }
+            log.info("Mapped roles: {}", roles);
+        }
+        return roles;
     }
 
-    private static Set<String> extractAuthorities(Jwt jwt) {
-        List<String> roles = jwt.getClaimAsStringList("roles");
-        return roles == null ? Set.of() : Set.copyOf(roles);
+
+
+    private Mono<ActorContext> buildServiceActor(Jwt jwt, String serviceName) {
+
+        return Mono.just(
+                ActorContext.builder()
+                        .type(ActorType.SERVICE)
+                        .serviceName(serviceName)
+                        .serviceAuthorities(extractClientRoles(jwt, serviceName))
+                        .build()
+        );
+    }
+
+    private Set<String> extractClientRoles(Jwt jwt, String serviceName) {
+        if (jwt.hasClaim("roles")) {
+            Object rolesClaim = jwt.getClaim("roles");
+            if (rolesClaim instanceof Collection<?> rolesList) {
+                return rolesList.stream()
+                        .map(Object::toString)
+                        .collect(java.util.stream.Collectors.toSet());
+            } else if (rolesClaim instanceof String rolesStr) {
+                return Set.of(rolesStr.split(","));
+            }
+        }
+        return Set.of();
     }
 }

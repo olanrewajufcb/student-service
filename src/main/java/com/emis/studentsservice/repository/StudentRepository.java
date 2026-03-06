@@ -48,7 +48,7 @@ public interface StudentRepository extends R2dbcRepository<Student, Long> {
     @Query("SELECT * FROM students WHERE first_name ILIKE :query OR last_name ILIKE :query OR student_number ILIKE :query")
     Flux<Student> searchByNameOrNumber(String query);
 
-    @Query("SELECT EXISTS(SELECT 1 FROM students WHERE id = :studentId)")
+    @Query("SELECT EXISTS(SELECT 1 FROM students WHERE student_id = :studentId)")
     Mono<Boolean> existsById(Long studentId);
 
     @Query("SELECT * FROM students WHERE school_id = :schoolId ORDER BY created_at DESC LIMIT :limit")
@@ -151,7 +151,7 @@ Mono<Long> countBySchoolIdAndGradeLevel(Long schoolId, String gradeLevel);
         """)
     Mono<Long> countBySchoolIdAndStatus(Long schoolId);
 
-    @Query("SELECT * FROM students WHERE student_number = $1")
+    @Query("SELECT * FROM students WHERE student_number = $1 AND status = 'ACTIVE' AND is_deleted = FALSE ")
     Mono<Student> findByStudentNumber(String studentNumber);
 
 

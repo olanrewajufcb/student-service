@@ -18,7 +18,7 @@ import org.springframework.data.relational.core.mapping.Table;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@Table(name = "students")
+@Table(name = "students", schema = "student_schema")
 public class Student {
     @Id
     private Long studentId;
@@ -42,10 +42,11 @@ public class Student {
     private String lga;
     private String state;
     private String postalCode;
+    private String country;
     private Boolean isDeleted;
     private LocalDate deletedAt;
     private String photoUrl;
-    private String createdBy;
+//    private String createdBy;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 

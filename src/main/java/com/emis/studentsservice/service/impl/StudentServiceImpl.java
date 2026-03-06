@@ -112,6 +112,7 @@ public class StudentServiceImpl implements StudentService {
               }
                 Student updatedStudent =
                     studentServiceHelper.updateStudent(existingStudent, request);
+              updatedStudent.setStudentId(existingStudent.getStudentId());
                 return studentRepository.save(updatedStudent);
 
             })

@@ -13,7 +13,6 @@ FROM student_schema.student_enrollments
 WHERE is_deleted = false
 GROUP BY school_id, school_code, academic_year;
 
-
 CREATE INDEX idx_student_analytics_school_year
     ON student_schema.student_analytics_enrollment_summary
         (school_code, academic_year);
@@ -45,7 +44,7 @@ WITH base_calculation AS (
     FROM student_schema.student_enrollments s
              LEFT JOIN student_schema.student_attendance_projection a
                        ON a.student_number = s.student_number
-                           AND a.attendance_date >= CURRENT_DATE - INTERVAL '30 days'
+                           AND a.lesson_date >= CURRENT_DATE - INTERVAL '30 days'
     WHERE s.enrollment_status = 'ACTIVE'
     GROUP BY s.student_id, s.student_number, s.school_id, s.school_code, s.academic_year, a.term_id
 )
@@ -74,8 +73,6 @@ SELECT
         CASE WHEN is_transfer = 1 THEN 10 ELSE 0 END
         ) AS risk_score
 FROM base_calculation;
-
-
 
 CREATE MATERIALIZED VIEW student_schema.student_dropout_risk_level AS
 SELECT

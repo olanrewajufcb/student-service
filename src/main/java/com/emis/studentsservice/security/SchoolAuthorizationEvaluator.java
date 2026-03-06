@@ -3,23 +3,21 @@ package com.emis.studentsservice.security;
 import com.emis.studentsservice.enums.ResourceAction;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Mono;
 
 @Component("schoolAuth")
 @RequiredArgsConstructor
 public class SchoolAuthorizationEvaluator {
 
+    private final ActorContextFactory actorContextFactory;
     private final AuthorizationPolicy policy;
 
-    public boolean authorize(
-            Authentication authentication,
-            String schoolCode,
-            ResourceAction action
-    ) {
-        Jwt jwt = (Jwt) authentication.getPrincipal();
-        ActorContext ctx = ActorContextFactory.from(jwt);
-
-        return policy.isAuthorized(ctx, schoolCode, action);
+    public Mono<Boolean> authorize(Authentication authentication,
+                                   String schoolCode, ResourceAction action) {
+        return actorContextFactory
+                .fromAuthentication(authentication)
+                .flatMap(actor -> policy
+                        .isAuthorized(actor, schoolCode, action));
     }
 }

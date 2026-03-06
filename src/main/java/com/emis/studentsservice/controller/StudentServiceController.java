@@ -7,6 +7,8 @@ import com.emis.studentsservice.dto.response.ApiResponse;
 import com.emis.studentsservice.dto.response.StudentResponse;
 import com.emis.studentsservice.dto.response.StudentStatisticsResponse;
 import com.emis.studentsservice.exception.BadRequestException;
+import com.emis.studentsservice.security.CanCreateResource;
+import com.emis.studentsservice.security.CanViewResource;
 import com.emis.studentsservice.service.StudentService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
@@ -44,25 +46,31 @@ public class StudentServiceController {
             .map(Field::getName)
             .collect(Collectors.toSet());
 
+    @CanCreateResource
     @Operation(summary = "Create a new student",
     description = "Create a new student")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Mono<StudentResponse> createStudent(@Valid @RequestBody CreateStudentRequest request) {
-        String requestId = UUID.randomUUID().toString();
+    public Mono<StudentResponse> createStudent(@Valid @RequestBody CreateStudentRequest request,
+                                               @RequestHeader(value = "schoolCode",  required = false)
+                                               String schoolCode) {
 
+        log.info("Logging schoolCode {}",  schoolCode);
+        String requestId = UUID.randomUUID().toString();
         return studentService.createStudent(request)
                 .doOnSubscribe(sub -> log.info("Creating student with id {}", requestId))
                 .contextWrite(ctx -> ctx.put(REQUEST_ID, requestId));
 
     }
 
+    @CanViewResource
     @Operation(summary = "Get a student by number",
     description = "Get a student by number")
     @GetMapping("{studentNumber}")
     @ResponseStatus(HttpStatus.OK)
     public Mono<StudentResponse> getStudentByNumber(@PathVariable String studentNumber,
-                                                    @RequestParam String schoolCode) {
+                                                    @RequestHeader(value = "schoolCode",  required = false)
+                                                    String schoolCode) {
     String requestId = UUID.randomUUID().toString();
     return studentService
         .getStudentByNumberAndSchoolCode(studentNumber, schoolCode,  requestId)
@@ -70,12 +78,15 @@ public class StudentServiceController {
         .contextWrite(ctx -> ctx.put(REQUEST_ID, requestId));
   }
 
-    @Operation(summary = "Update a student",
-    description = "Update a student")
+    @CanCreateResource
+    @Operation(summary = "Update a student", description = "Update a student")
     @PutMapping("{studentNumber}")
     @ResponseStatus(HttpStatus.OK)
     public Mono<StudentResponse> updateStudent(@PathVariable String studentNumber,
+                                               @RequestHeader(value = "schoolCode",  required = false)
+                                               String schoolCode,
                                                @Valid @RequestBody UpdateStudentRequest request) {
+        log.info("Logging schoolCode {}",  schoolCode);
         String requestId = UUID.randomUUID().toString();
 
        return studentService.updateStudent(studentNumber, request, requestId)
@@ -83,14 +94,16 @@ public class StudentServiceController {
                 .contextWrite(ctx -> ctx.put(REQUEST_ID, requestId));
     }
 
+    @CanViewResource
     @Operation(summary = "Get all students",
     description = "Get all students from a school")
     @GetMapping("all/{schoolCode}")
     @ResponseStatus(HttpStatus.OK)
-    public Flux<StudentResponse> getStudentsBySchoolCode(@PathVariable String schoolCode,
+    public Flux<StudentResponse> getStudentsBySchoolCode(
                         @RequestParam(defaultValue = "0")
                         @Min(value = 0, message = "page must not be less than 0")
                         int page,
+                        @PathVariable String schoolCode,
                         @RequestParam(defaultValue = "10")
                         @Min(value = 1, message = "size must be at least 1")
                         int size,
@@ -109,8 +122,10 @@ public class StudentServiceController {
                 .contextWrite(ctx -> ctx.put(REQUEST_ID, requestId));
     }
 
+    @CanCreateResource
     @PostMapping("/batch")
-    public Flux<StudentResponse> batchCreateStudent(@RequestBody List<Long> studentId) {
+    public Flux<StudentResponse> batchCreateStudent(@RequestBody List<Long> studentId,
+                                                    @RequestHeader(required = false) String schoolCode) {
         String requestId = UUID.randomUUID().toString();
 
         return studentService.getStudentsBatch(studentId, requestId)
@@ -118,6 +133,7 @@ public class StudentServiceController {
                 .contextWrite(ctx -> ctx.put(REQUEST_ID, requestId));
     }
 
+    @CanViewResource
     @Operation(summary = "Get students statistics",
     description = "Get students statistics")
     @GetMapping("/statistics/{schoolCode}")
@@ -129,10 +145,13 @@ public class StudentServiceController {
                 .contextWrite(ctx -> ctx.put(REQUEST_ID, requestId));
     }
 
+    @CanViewResource
     @Operation(summary = "Get all schools students statistics",
     description = "Get all schools students statistics")
     @GetMapping("schools/statistics")
-    public Mono<ApiResponse<StudentStatisticsResponse>> getAllSchoolsStudentStatistics() {
+    public Mono<ApiResponse<StudentStatisticsResponse>> getAllSchoolsStudentStatistics(
+            @RequestHeader(required = false) String schoolCode
+    ) {
         String requestId = UUID.randomUUID().toString();
 
         return studentService.getAllSchoolsStudentStatistics(requestId)
@@ -140,18 +159,22 @@ public class StudentServiceController {
                 .contextWrite(ctx -> ctx.put(REQUEST_ID, requestId));
     }
 
+
+    @CanCreateResource
     @Operation(summary = "Get all students",
     description = "Get all students")
     @GetMapping
     public Mono<Page<StudentResponse>> getAllStudents(
             @RequestParam(defaultValue = "0")
-                                                          @Min(value = 0, message = "page must not be less than 0")
-                                                          int page,
-                                                      @RequestParam(defaultValue = "10")
-                                                          @Min(value = 1, message = "size must be at least 1")
-                                                          int size,
-                                                      @RequestParam(defaultValue = "studentNumber")
-                                                      String sortBy){
+            @Min(value = 0, message = "page must not be less than 0")
+            int page,
+             @RequestHeader(required = false) String schoolCode,
+             @RequestParam(defaultValue = "10")
+             @Min(value = 1, message = "size must be at least 1")
+            int size,
+            @RequestParam(defaultValue = "studentNumber")
+            String sortBy){
+
         String requestId = UUID.randomUUID().toString();
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy));
         return studentService.getAllStudents(pageable, requestId)

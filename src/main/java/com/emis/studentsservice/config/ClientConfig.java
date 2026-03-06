@@ -17,7 +17,7 @@ public class ClientConfig {
 
         ReactiveOAuth2AuthorizedClientProvider authorizedClientProvider =
                 ReactiveOAuth2AuthorizedClientProviderBuilder.builder()
-                        .clientCredentials()  // Required for machine-to-machine
+                        .clientCredentials()
                         .build();
 
         AuthorizedClientServiceReactiveOAuth2AuthorizedClientManager authorizedClientManager =

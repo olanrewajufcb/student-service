@@ -20,7 +20,8 @@ public class StudentServiceHelper {
 
 
     public Student updateStudent(Student student, UpdateStudentRequest request) {
-        if (request.firstName() != null) {
+
+    if (request.firstName() != null) {
             student.setFirstName(request.firstName());
         }
         if (request.lastName() != null) {
@@ -29,8 +30,17 @@ public class StudentServiceHelper {
         if (request.dateOfBirth() != null) {
             student.setDateOfBirth(request.dateOfBirth());
         }
+        if (request.gender() != null) {
+            student.setGender(request.gender());
+        }
+        if (request.enrollmentDate() != null) {
+            student.setEnrollmentDate(request.enrollmentDate());
+        }
         if (request.gradeLevel() != null) {
             student.setGradeLevel(request.gradeLevel().name());
+        }
+        if (request.status() != null) {
+            student.setStatus(request.status().name());
         }
         if (request.address1() != null) {
             student.setAddress1(request.address1());
@@ -48,6 +58,18 @@ public class StudentServiceHelper {
         if (request.lga() != null) {
       student.setLga(request.lga());
     }
+        if (request.city() != null) {
+            student.setCity(request.city());
+        }
+        if (request.state() != null) {
+            student.setState(request.state());
+        }
+        if(request.postalCode() != null){
+            student.setPostalCode(request.postalCode());
+        }
+        if (request.photoUrl() != null) {
+            student.setPhotoUrl(request.photoUrl());
+        }
         return student;
 
     }

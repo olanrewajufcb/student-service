@@ -16,7 +16,8 @@ public interface StudentService {
 
     Mono<StudentResponse> createStudent(CreateStudentRequest request);
 
-    Mono<StudentResponse>  updateStudent(String studentNumber, UpdateStudentRequest request, String requestId);
+    Mono<StudentResponse>  updateStudent(String studentNumber,
+                                         UpdateStudentRequest request, String requestId);
     Flux<StudentResponse> getStudentsBySchoolCode(String schoolCode, Pageable pageable, String requestId);
     Mono<StudentResponse> getStudentByNumberAndSchoolCode(String studentNumber, String schoolCode, String requestId);
 

@@ -1,6 +1,6 @@
 package com.emis.studentsservice.enums;
 
 public enum ResourceAction {
-    CREATE_STUDENT,
-    VIEW_STUDENT
+    CREATE_RESOURCE,
+    VIEW_RESOURCE
 }

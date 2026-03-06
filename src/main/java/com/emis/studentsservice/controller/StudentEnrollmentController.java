@@ -8,6 +8,8 @@ import com.emis.studentsservice.dto.request.StudentTransferRequest;
 import com.emis.studentsservice.dto.response.PromotionResponse;
 import com.emis.studentsservice.dto.response.StudentDropoutResponse;
 import com.emis.studentsservice.dto.response.StudentEnrollmentResponse;
+import com.emis.studentsservice.security.CanCreateResource;
+import com.emis.studentsservice.security.CanViewResource;
 import com.emis.studentsservice.service.StudentEnrollmentService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
@@ -34,61 +36,69 @@ public class StudentEnrollmentController {
 
     private final StudentEnrollmentService studentEnrollmentService;
 
+    @CanCreateResource
     @Operation(summary = "Create a new student enrollment",
     description = "Create a new student enrollment")
     @PostMapping("/{studentNumber}/enrollments")
     @ResponseStatus(HttpStatus.CREATED)
     public Mono<StudentEnrollmentResponse> createStudentEnrollment(
             @PathVariable String studentNumber,
+            @RequestHeader(required = false) String schoolCode,
             @RequestBody StudentEnrollmentRequest studentEnrollmentRequest) {
-        log.info("Creating student enrollment for student {}", studentNumber);
+        log.info("Creating student enrollment for student {} {}", studentNumber, schoolCode);
         String requestId = UUID.randomUUID().toString();
         return studentEnrollmentService
                 .createStudentEnrollment(studentNumber, studentEnrollmentRequest, requestId)
                 .contextWrite(ctx -> ctx.put("requestId", requestId));
     }
 
+    @CanViewResource
     @Operation(summary = "Get a student enrollment",
     description = "Get a student enrollment")
     @GetMapping("/{studentNumber}/enrollments/current")
     @ResponseStatus(HttpStatus.OK)
     public Mono<StudentEnrollmentResponse> getStudentEnrollment(
             @PathVariable String studentNumber,
-            @RequestParam() String academicYear,
-            @RequestParam() String schoolCode) {
+            @RequestParam() String schoolCode,
+            @RequestParam() String academicYear) {
         log.info("Getting student enrollment for student {} and {}", studentNumber, schoolCode);
         String requestId = UUID.randomUUID().toString();
         return studentEnrollmentService.getStudentEnrollment(studentNumber,schoolCode, academicYear, requestId)
                 .contextWrite(ctx -> ctx.put("requestId", requestId));
     }
 
+    @CanCreateResource
     @Operation(summary = "Transfer a student to another school",
     description = "Transfer a student to another school")
     @PostMapping("/{studentNumber}/transfer")
     @ResponseStatus(HttpStatus.OK)
     public Mono<StudentEnrollmentResponse> transferStudent(
             @PathVariable String studentNumber,
+            @RequestHeader(required = false) String schoolCode,
             @RequestBody StudentTransferRequest studentTransferRequest) {
-        log.info("Transferring student {} to another school", studentNumber);
+        log.info("Transferring student {} to another school {}", studentNumber, schoolCode);
         String requestId = UUID.randomUUID().toString();
         return studentEnrollmentService
                 .transferStudent(studentNumber, studentTransferRequest, requestId)
                 .contextWrite(ctx -> ctx.put("requestId", requestId));
     }
+    @CanCreateResource
     @Operation(summary = "Dropout a student from school",
     description = "Dropout a student from school")
     @PostMapping("/{studentNumber}/dropout")
     @ResponseStatus(HttpStatus.OK)
     public Mono<StudentDropoutResponse> dropoutStudent(
             @PathVariable String studentNumber,
+            @RequestHeader(required = false) String schoolCode,
             @RequestBody @Valid StudentDropoutRequest request) {
-        log.info("Dropping out student {} from school", studentNumber);
+        log.info("Dropping out student {} from school {}", studentNumber, schoolCode);
         String requestId = UUID.randomUUID().toString();
         return studentEnrollmentService
                 .dropoutStudent(studentNumber, request, requestId)
                 .contextWrite(ctx -> ctx.put("requestId", requestId));
     }
 
+    @CanViewResource
     @Operation(summary = "Get all students enrollments in a school",
             description = "Get all student enrollments")
     @GetMapping("/enrollments/current")

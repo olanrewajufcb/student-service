@@ -210,10 +210,10 @@ CREATE TABLE student_schema.student_attendance_projection (
                                                               school_code VARCHAR(50) NOT NULL,
                                                               notes TEXT,
                                                               correlation_id VARCHAR(50),
-                                                              attendance_date DATE NOT NULL,
+                                                              lesson_date DATE NOT NULL,
                                                               attendance_status VARCHAR(20) NOT NULL,
                                                               recorded_at TIMESTAMP DEFAULT NOW()
 );
 
 CREATE INDEX idx_projection_student_date
-    ON student_schema.student_attendance_projection(student_number, attendance_date);
+    ON student_schema.student_attendance_projection(student_number, lesson_date);

@@ -16,7 +16,7 @@ public interface StudentMapper {
     @Mapping(target = "updatedAt", expression = "java(LocalDateTime.now())")
     @Mapping(target = "studentNumber", source = "studentNumber")
     @Mapping(target = "gradeLevel", source = "gradeLevel")
-    @Mapping(target = "createdBy", ignore = true)
+//    @Mapping(target = "createdBy", ignore = true)
     @Mapping(target = "isDeleted", ignore = true)
     @Mapping(target = "deletedAt", ignore = true)
     Student toEntity(CreateStudentRequest request);

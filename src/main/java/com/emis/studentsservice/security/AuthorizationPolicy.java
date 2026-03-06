@@ -3,40 +3,48 @@ package com.emis.studentsservice.security;
 
 import com.emis.studentsservice.config.StudentConfigurationProperties;
 import com.emis.studentsservice.enums.ResourceAction;
+import com.emis.studentsservice.enums.UserRole;
 import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Mono;
 
-import static com.emis.studentsservice.enums.UserRole.*;
+import java.util.Objects;
 
 @Component
 @Slf4j
+@RequiredArgsConstructor
 public class AuthorizationPolicy {
 
     private final StudentConfigurationProperties properties;
 
-    public AuthorizationPolicy(StudentConfigurationProperties properties) {
-        this.properties = properties;
-    }
-
-
-    public boolean isAuthorized(
+    public Mono<Boolean> isAuthorized(
             ActorContext ctx,
             String schoolCode,
             ResourceAction action
     ) {
 
         if (ctx.isService()) {
-            return authorizeService((ServiceActorContext) ctx, action);
+            return Mono.just(authorizeService(ctx, action));
         }
-        return authorizeUser((UserActorContext) ctx, schoolCode, action);
+
+        return Mono.just(authorizeUser(ctx, schoolCode, action));
     }
 
     private boolean authorizeUser(
-            UserActorContext ctx,
+            ActorContext ctx,
             String schoolCode,
             ResourceAction action
     ) {
+    // Auth check user=school2.admin, roles=[SCHOOL_ADMIN], schoolCodeHeader=TT1273,
+    // tokenSchoolCode=SCH-001
+    log.info(
+        "Auth check user={}, roles={}, schoolCodeHeader={}, tokenSchoolCode={}",
+        ctx.getUsername(),
+        ctx.getUserRoles(),
+        schoolCode,
+        ctx.getSchoolCode());
 
         if (!hasSchoolScope(ctx, schoolCode)) {
             return false;
@@ -45,33 +53,38 @@ public class AuthorizationPolicy {
         StudentConfigurationProperties.ActionPolicy policy =
                 properties.getActions().get(action);
 
-        return ctx.roles().stream()
+        if (policy == null) {
+            return false;
+        }
+
+        return ctx.getUserRoles()
+                .stream()
                 .anyMatch(policy.getRoles()::contains);
     }
 
-    private boolean hasSchoolScope(UserActorContext ctx, String schoolCode) {
+    private boolean hasSchoolScope(ActorContext ctx, String schoolCode) {
 
-        if (ctx.hasRole(SYSTEM_ADMIN)) return true;
-        if (ctx.hasRole(STATE_ADMIN))  return true;
-        if (ctx.hasRole(LGA_ADMIN))    return true;
+        if (ctx.getUserRoles().contains(UserRole.SYSTEM_ADMIN)) return true;
+        if (ctx.getUserRoles().contains(UserRole.STATE_ADMIN))  return true;
+        if (ctx.getUserRoles().contains(UserRole.LGA_ADMIN))    return true;
 
-        return schoolCode.equals(ctx.schoolCode());
+        return Objects.equals(schoolCode, ctx.getSchoolCode());
     }
 
     private boolean authorizeService(
-            ServiceActorContext ctx,
+            ActorContext ctx,
             ResourceAction action
     ) {
 
         StudentConfigurationProperties.ActionPolicy policy =
                 properties.getActions().get(action);
 
-
-        if (policy.getServiceAuthorities() == null) {
+        if (policy == null) {
             return false;
         }
 
-        return ctx.authorities().stream()
+        return ctx.getServiceAuthorities()
+                .stream()
                 .anyMatch(policy.getServiceAuthorities()::contains);
     }
 

@@ -28,42 +28,41 @@ spring:
 
   cloud:
     function:
-      definition:  attendanceEvents;studentReportEvents
+      definition: attendanceEvents;studentReportEvents
     stream:
       bindings:
         attendanceEvents-in-0:
           destination: attendance.events.v1
           group: student-service-group
-
         studentReportEvents-in-0:
           destination: student-report.events.v1
           group: student-report-group
-
         studentReportEvents-out-0:
           destination: student-report.events.v1
-
       kafka:
         binder:
           brokers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+          configuration:
+            request.timeout.ms: 30000
+            metadata.max.age.ms: 30000
 
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8080/realms/emis
 
-    security:
-      oauth2:
-        resourceserver:
-          jwt:
+      client:
+        registration:
+          student-service:
+            client-id: emis-student-service
+            client-secret: ${STUDENT_SERVICE_SECRET:student-service-secret}
+            authorization-grant-type: client_credentials
+            scope: openid
+            provider: keycloak
+        provider:
+          keycloak:
             issuer-uri: http://localhost:8080/realms/emis
-
-        client:
-          registration:
-            student-service:
-              client-id: emis-student-service
-              client-secret: ${STUDENT_SERVICE_SECRET:secret}
-              authorization-grant-type: client_credentials
-              scope: openid
-          provider:
-            keycloak:
-              issuer-uri: http://localhost:8080/realms/emis
-
 
   lifecycle:
     timeout-per-shutdown-phase: 15s
@@ -73,29 +72,29 @@ emis:
     configuration:
       base-url: ${EMIS_SERVICE_URL:http://localhost:8082}
       get-school-details-url: ${emis.services.configuration.base-url}/api/v1/schools/{schoolCode}
-      validate-school-exists-url: ${emis.service.configuration.base-url}/schools/validate/{schoolCode}
+      validate-school-exists-url: ${emis.services.configuration.base-url}/schools/validate/{schoolCode}
 
     storage-base-url: ${EMIS_STORAGE_URL:http://localhost:8086/reports}
 
     timeout: 5
     actions:
-      create-student:
+      create-resource:
         roles:
           - SYSTEM_ADMIN
           - STATE_ADMIN
+          - LGA_ADMIN
           - SCHOOL_ADMIN
 
-      view-student:
-       roles:
+      view-resource:
+        roles:
          - SYSTEM_ADMIN
          - STATE_ADMIN
          - SCHOOL_ADMIN
          - SCHOOL_TEACHER
          - STUDENT
          - PARENT
-
-
-
+        service-authorities:
+          - INTERNAL_SERVICE
 
 server:
   port: 8083
@@ -104,15 +103,12 @@ server:
     connection-timeout: 2s
     idle-timeout: 15s
 
-
-springdoc:
-  swagger-ui:
-    path: /swagger-ui
-
 logging:
   level:
+    org.springframework.security: TRACE
     org.springframework.web: DEBUG
     org.springframework.http.converter: DEBUG
     org.springframework.validation: DEBUG
     org.springframework.web.reactive.result.method.annotation: DEBUG
     io.r2dbc.postgresql.QUERY: DEBUG
+    org.flywaydb: DEBUG
